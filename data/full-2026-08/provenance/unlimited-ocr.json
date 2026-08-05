@@ -1,0 +1,81 @@
+{
+  "producer": "bhl-ocr-eval drivers/unlimited-ocr-port.py via saturate on HF Jobs",
+  "run_id": "full-2026-08",
+  "script": "drivers/unlimited-ocr-port.py",
+  "script_commit": "afa08c85 (main, squash-merge of PR #39) \u2014 tree 14dcb9746cfbf719a29246d38333b95f1bb25632, byte-identical to the local 61e57fd checkout the jobs were uploaded from",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "baidu/Unlimited-OCR",
+  "model_revision": "07dea832e22aefee32ad281d4b80551282e1c168",
+  "prompt": "document parsing.",
+  "settings": {
+    "model": "baidu/Unlimited-OCR",
+    "image": "vllm/vllm-openai:v0.26.0",
+    "max_model_len": 32768,
+    "gpu_memory_utilization": 0.8,
+    "serve_args": [
+      "--trust-remote-code",
+      "--no-enable-prefix-caching",
+      "--mm-processor-cache-gb",
+      "0",
+      "--limit-mm-per-prompt",
+      "{\"image\": 1}"
+    ],
+    "logits_processor": "vllm.model_executor.models.unlimited_ocr:NGramPerReqLogitsProcessor",
+    "ngram_size": 35,
+    "window_size": 128,
+    "max_tokens": 8192,
+    "temperature": 0.0
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "id": "6a710f0f6b79c09949c212f4",
+    "created_at": "2026-08-03 21:58:39.979000+00:00",
+    "started_at": "2026-08-03 22:03:27.832000+00:00",
+    "finished_at": "2026-08-03 22:59:00.350000+00:00",
+    "docker_image": "vllm/vllm-openai:v0.26.0",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "uv",
+      "run",
+      "/data/unlimited-ocr-port.py",
+      "--input-dataset",
+      "davanstrien/bhl-eval-impact-full-2165-v1",
+      "--revision",
+      "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+      "--image-column",
+      "image",
+      "--id-column",
+      "PageID",
+      "--model-revision",
+      "07dea832e22aefee32ad281d4b80551282e1c168",
+      "--output",
+      "hf://buckets/davanstrien/bhl-ocr-runs/full-2026-08/unlimited-ocr/"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "a10g-small",
+    "labels": {},
+    "volumes": [
+      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260803T215837-998879')"
+    ],
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=287, running_secs=3332, total_secs=3620)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6a710f0f6b79c09949c212f4"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/unlimited-ocr.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "4e000fcbd0eccab4abf5c6e0780823b042cca23f692f25517745938493ec3a7f"
+  }
+}

@@ -1,0 +1,53 @@
+[project]
+name = "bhl-ocr-eval"
+version = "0.2.0"
+description = "Per-page OCR scorecard for the BHL IMPACT ground truth: a frozen, versioned scoring core plus reporting."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+# The frozen scoring core (scorer/normalizers/report) needs only jiwer at import time; pandas is a
+# lazy, I/O-boundary import in report.py and lives in the dev group instead. The heavier per-runner
+# deps (datasets, openai, pytesseract, pillow, …) stay declared in each runner's PEP-723 header —
+# runners are self-contained scripts, not part of this package.
+dependencies = ["jiwer>=4,<5"]
+
+# Test/dev toolchain. `uv run pytest` (and `uv sync`) install this automatically — no more
+# `--with pytest --with hypothesis --with jiwer --with pandas` on the command line or in CI.
+[dependency-groups]
+dev = [
+    "pytest",
+    "hypothesis",
+    "pandas",
+    "jiwer>=4,<5",
+    "pyarrow>=24.0.0",
+    "huggingface-hub>=1.22.0",
+]
+
+# Keep uv.lock reproducible and CI-portable regardless of any machine-global uv config. A global
+# *relative* `exclude-newer` (e.g. "2 days") bakes a drifting timestamp into the lock, and a private
+# index bakes in unreachable/internal URLs — either makes `uv sync --locked` re-resolve and fail on
+# other machines / in CI. Pin the index to public PyPI and a fixed cutoff so every machine locks
+# identically; bump `exclude-newer` deliberately when you want newer dependency versions.
+[tool.uv]
+exclude-newer = "2026-07-05T00:00:00Z"
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# The core lives in scoring/ but its modules import each other flatly (`import scorer as S`), and the
+# self-tests run as standalone PEP-723 scripts (`uv run scoring/scorer.py`). To keep BOTH working, we
+# install the modules as TOP-LEVEL modules (scorer, normalizers, …), not under a `scoring.` namespace:
+# `sources = ["scoring"]` strips the directory prefix so `scoring/scorer.py` installs as `scorer`.
+[tool.hatch.build.targets.wheel]
+include = ["scoring/*.py"]
+sources = ["scoring"]
+
+# Runners stay PEP-723 scripts (not installed), but three tests import runner modules directly. Put
+# runners/ on the test path here so those tests don't need per-file sys.path inserts.
+[tool.pytest.ini_options]
+pythonpath = ["runners"]

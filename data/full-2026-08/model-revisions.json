@@ -1,0 +1,15 @@
+{
+  "ATH-MaaS/OvisOCR2": "65c619d374b55d4152e85150fc1b003700bc1f0c",
+  "PaddlePaddle/PaddleOCR-VL-1.6": "66317acc4c9fc17bd154591ce650735cd2855f3e",
+  "Qwen/Qwen3.5-9B": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "allenai/olmOCR-2-7B-1025-FP8": "40bd7202494b8264ee17ada08b401b5aab7a9ce1",
+  "baidu/Qianfan-OCR": "623bf5d20d446abdb36606aa4547cd0c18886fe5",
+  "baidu/Unlimited-OCR": "07dea832e22aefee32ad281d4b80551282e1c168",
+  "deepseek-ai/DeepSeek-OCR": "9f30c71f441d010e5429c532364a86705536c53a",
+  "deepseek-ai/DeepSeek-OCR-2": "aaa02f3811945a91062062994c5c4a3f4c0af2b0",
+  "ds4sd/SmolDocling-256M-preview": "ce51f56c4ebe36e0b1c3a55f67b261ba22a50bf8",
+  "lightonai/LightOnOCR-2-1B": "c97bd377f04481830395218fa8951df9deaba756",
+  "rednote-hilab/dots.mocr": "e539fbb52280393adc081b289ec597430a0f9031",
+  "rednote-hilab/dots.ocr": "c0111ce6bc07803dbc267932ffef0ae3a51dc951",
+  "zai-org/GLM-OCR": "ca5d8b3e287e52589e37c28385d9655ee4372f9d"
+}

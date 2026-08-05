@@ -1,0 +1,80 @@
+{
+  "producer": "bhl-ocr-eval drivers/qianfan-ocr-port.py via saturate on HF Jobs",
+  "run_id": "full-2026-08",
+  "script": "drivers/qianfan-ocr-port.py",
+  "script_commit": "afa08c85 (main, squash-merge of PR #39) \u2014 tree 14dcb9746cfbf719a29246d38333b95f1bb25632, byte-identical to the local 61e57fd checkout the jobs were uploaded from",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "baidu/Qianfan-OCR",
+  "model_revision": "623bf5d20d446abdb36606aa4547cd0c18886fe5",
+  "prompt": "Parse this document to Markdown.",
+  "settings": {
+    "model": "baidu/Qianfan-OCR",
+    "image": "vllm/vllm-openai:v0.26.0",
+    "max_model_len": 16384,
+    "gpu_memory_utilization": 0.85,
+    "serve_args": [
+      "--limit-mm-per-prompt",
+      "{\"image\": 1}",
+      "--mm-processor-cache-gb",
+      "0",
+      "--no-enable-prefix-caching"
+    ],
+    "max_tokens": 8192,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_image_tokens": 4096
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "id": "6a71b960a00abefd4b291397",
+    "created_at": "2026-08-04 10:05:20.047000+00:00",
+    "started_at": "2026-08-04 10:10:03.429000+00:00",
+    "finished_at": "2026-08-04 10:19:51.143000+00:00",
+    "docker_image": "vllm/vllm-openai:v0.26.0",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "uv",
+      "run",
+      "/data/qianfan-ocr-port.py",
+      "--input-dataset",
+      "davanstrien/bhl-eval-impact-full-2165-v1",
+      "--revision",
+      "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+      "--image-column",
+      "image",
+      "--id-column",
+      "PageID",
+      "--model-revision",
+      "623bf5d20d446abdb36606aa4547cd0c18886fe5",
+      "--retry-errors",
+      "--output",
+      "hf://buckets/davanstrien/bhl-ocr-runs/full-2026-08/qianfan-ocr/"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "a10g-small",
+    "labels": {},
+    "volumes": [
+      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260804T100517-c84246')"
+    ],
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=283, running_secs=587, total_secs=871)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6a71b960a00abefd4b291397"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/qianfan-ocr.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "9bc407fb19e92d23f28910b20dced255316a583c237c9a78678fcfdb303d1ed2"
+  }
+}

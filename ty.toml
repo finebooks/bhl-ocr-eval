@@ -1,0 +1,31 @@
+# ty — Astral's type checker (https://docs.astral.sh/ty/). Pinned in CI; run locally with `uvx ty check`.
+#
+# The runners/scripts are PEP-723 `uv run` scripts whose third-party deps (pandas, jiwer, datasets,
+# openai, …) are declared per file and are NOT installed in the type-check job, so ty can't resolve
+# them. That's intentional: the job type-checks FIRST-PARTY code — above all, cross-module call
+# signatures. It exists to catch the class of bug pytest and ruff miss, e.g. a call left at the old
+# arity after a frozen-core signature change (a real one slipped past both here). First-party
+# signatures are analysable whether or not third-party modules resolve, so silence only the
+# missing-third-party-import noise; every other rule stays on.
+#
+# The frozen core + aggregation live in scoring/; runners/scripts/tests reach them via a sys.path
+# insert at runtime, so ty needs the same dir on its module-resolution path to keep checking those
+# cross-module calls (without it, unresolved-import=ignore would SILENTLY stop analysing them).
+# drivers/ is excluded. Per the note above, this job exists to catch cross-module first-party
+# signature drift — a call left at the old arity after a frozen-core change. The drivers call
+# into no first-party module at all; they are standalone PEP-723 scripts that talk to saturate
+# and an HTTP endpoint, so excluding them costs nothing this job was built to find.
+#
+# What ty flags there is real but not a bug: each driver's SERVING dict is one flat mapping of
+# heterogeneous values, so `str | int | float | list[str]` is the best inference available and
+# `*SERVING["extra_args"]` reads as unpacking a possible `str`. Fixing it properly means giving
+# serve args their own structured type rather than annotating twelve dicts — tracked against the
+# saturate API, not worked around here.
+[src]
+exclude = ["drivers/"]
+
+[environment]
+extra-paths = ["scoring"]
+
+[rules]
+unresolved-import = "ignore"

@@ -1,0 +1,90 @@
+{
+  "producer": "bhl-ocr-eval drivers/qwen35-9b-port.py via saturate on HF Jobs",
+  "run_id": "full-2026-08",
+  "script": "drivers/qwen35-9b-port.py",
+  "script_commit": "afa08c85 (main, squash-merge of PR #39) \u2014 tree 14dcb9746cfbf719a29246d38333b95f1bb25632, byte-identical to the local 61e57fd checkout the jobs were uploaded from",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "Qwen/Qwen3.5-9B",
+  "model_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "prompt": {
+    "neutral": "Transcribe all of the text in this image.",
+    "format": "Transcribe all of the text in this image as Markdown.\nFollow the natural reading order of the page. Render tables as Markdown tables and mathematical expressions as LaTeX. Reproduce the text only \u2014 do not summarise, translate, or add any commentary, headings, or notes of your own. Output the transcription and nothing else.",
+    "archival": "This is a scanned page from a historical printed book.\nTranscribe all of the text on the page exactly as it appears. Keep the original spelling, capitalisation, punctuation, hyphenation, and typography, including archaic or inconsistent forms and the long s. Do not modernise, correct, or normalise anything. Where the scan is damaged or a character is genuinely illegible, transcribe what you can read and do not invent text to fill the gap.",
+    "archival_format": "This is a scanned page from a historical printed book.\nTranscribe all of the text on the page as Markdown, following the natural reading order. Keep the original spelling, capitalisation, punctuation, hyphenation, and typography, including archaic or inconsistent forms and the long s. Do not modernise, correct, or normalise anything. Where the scan is damaged or a character is genuinely illegible, transcribe what you can read and do not invent text to fill the gap. Render tables as Markdown tables and mathematical expressions as LaTeX. Output the transcription and nothing else."
+  },
+  "settings": {
+    "model": "Qwen/Qwen3.5-9B",
+    "image": "vllm/vllm-openai:v0.26.0",
+    "max_model_len": 16384,
+    "gpu_memory_utilization": 0.9,
+    "extra_args": [
+      "--max-num-batched-tokens",
+      "16384",
+      "--no-enable-prefix-caching",
+      "--mm-processor-cache-gb",
+      "0",
+      "--limit-mm-per-prompt",
+      "{\"image\": 1, \"video\": 0}"
+    ],
+    "max_tokens": 8192,
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "min_p": 0.0,
+    "presence_penalty": 1.5,
+    "repetition_penalty": 1.0
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "id": "6a71b312a00abefd4b2912ea",
+    "created_at": "2026-08-04 09:38:26.406000+00:00",
+    "started_at": "2026-08-04 09:41:43.443000+00:00",
+    "finished_at": "2026-08-04 10:46:05.166000+00:00",
+    "docker_image": "vllm/vllm-openai:v0.26.0",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "uv",
+      "run",
+      "/data/qwen35-9b-port.py",
+      "--input-dataset",
+      "davanstrien/bhl-eval-impact-full-2165-v1",
+      "--revision",
+      "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+      "--image-column",
+      "image",
+      "--id-column",
+      "PageID",
+      "--model-revision",
+      "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "--card-penalties",
+      "--output",
+      "hf://buckets/davanstrien/bhl-ocr-runs/full-2026-08/qwen35-9b-greedy-penalties/"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "l40sx1",
+    "labels": {},
+    "volumes": [
+      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260804T093823-776f6d')"
+    ],
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=197, running_secs=3861, total_secs=4058)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6a71b312a00abefd4b2912ea"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/qwen35-9b.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "bc2faa422ff891a05cfacd7208fc423d435aa814f236a1328bf9074cef92c129"
+  }
+}

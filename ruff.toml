@@ -1,0 +1,13 @@
+# ruff lint config. Defaults plus B (bugbear — real bug patterns, e.g. zip() without strict=) and
+# ARG (unused arguments). Kept minimal on purpose; add a rule only when it earns its keep.
+target-version = "py310"
+
+[lint]
+extend-select = ["B", "ARG"]
+
+[lint.per-file-ignores]
+# drivers/ — saturate calls `parse(row, body)` and `to_request(row)` with a fixed arity, so a
+# driver that needs only the response still has to accept `row`. That is a callback contract,
+# not dead code, and ARG001 cannot tell the difference. Scoped to this directory so the rule
+# keeps earning its keep everywhere else.
+"drivers/*.py" = ["ARG001"]

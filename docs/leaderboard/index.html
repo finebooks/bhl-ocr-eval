@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BHL OCR Leaderboard</title>
+<style>
+  /* IM Fell English — Igino Marini's digitisation of the 17th-c. Fell types (SIL OFL),
+     subset to latin + U+017F (ſ): the board ranks models on pages set in letters like these. */
+  @font-face{font-family:"IM Fell English";font-style:normal;font-weight:400;font-display:swap;
+    src:url(fonts/imfell-english.woff2) format("woff2")}
+  @font-face{font-family:"IM Fell English";font-style:italic;font-weight:400;font-display:swap;
+    src:url(fonts/imfell-english-italic.woff2) format("woff2")}
+  :root{
+    --paper:#F3EEE3; --surface:#FAF7EE; --surface-2:#EEE7D6; --band:#EFE9DA;
+    --ink:#262016; --ink-2:#4C443A; --muted:#7E7568; --line:#DDD5C2; --line-2:#CCC2AB;
+    --accent:#2E6E5E; --accent-ink:#1F5346;
+    --vlm:#3A63B8; --spec:#0E8A57; --class:#B0641A;
+    --barbg:#E8E1CE;
+    --f-display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --f-fell:"IM Fell English",Georgia,serif;
+    --f-ui:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --f-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#171310; --surface:#1E1915; --surface-2:#272119; --band:#211C16;
+      --ink:#E8E1D2; --ink-2:#BBB2A2; --muted:#8D857A; --line:#37302A;
+      --line-2:#423A32; --accent:#5FB39B; --accent-ink:#7FC7B1;
+      --vlm:#6E92DE; --spec:#3AA57C; --class:#C88A3A;
+      --barbg:#2B251E;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F3EEE3; --surface:#FAF7EE; --surface-2:#EEE7D6; --band:#EFE9DA;
+    --ink:#262016; --ink-2:#4C443A; --muted:#7E7568; --line:#DDD5C2; --line-2:#CCC2AB;
+    --accent:#2E6E5E; --accent-ink:#1F5346; --vlm:#3A63B8; --spec:#0E8A57; --class:#B0641A; --barbg:#E8E1CE;
+  }
+  :root[data-theme="dark"]{
+    --paper:#171310; --surface:#1E1915; --surface-2:#272119; --band:#211C16;
+    --ink:#E8E1D2; --ink-2:#BBB2A2; --muted:#8D857A; --line:#37302A; --line-2:#423A32;
+    --accent:#5FB39B; --accent-ink:#7FC7B1; --vlm:#6E92DE; --spec:#3AA57C; --class:#C88A3A; --barbg:#2B251E;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-ui);
+       font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1360px;margin:0 auto;padding:34px 22px 80px}
+  a{color:var(--accent-ink);text-decoration:none;border-bottom:1px solid color-mix(in oklab,var(--accent) 35%,transparent)}
+  a:hover{border-bottom-color:var(--accent)}
+
+  /* header */
+  header{margin-bottom:26px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);
+          font-weight:600;margin-bottom:8px}
+  .kicker a{color:inherit}
+  h1{font-family:var(--f-display);font-weight:600;font-size:2.05rem;line-height:1.08;margin:0;
+     letter-spacing:-.01em;text-wrap:balance}
+  .lede{margin:.6rem 0 0;color:var(--ink-2);font-size:1.02rem}
+  /* the specimen: one real ground-truth line, shown as each lane scores it — the historical
+     face appears here and only here, where the letterforms are the content */
+  .specimen{margin:14px 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+  .spec-dip{font-family:var(--f-fell);font-size:1.1rem;color:var(--ink)}
+  .spec-read{font-family:var(--f-mono);font-size:.8rem;color:var(--accent-ink)}
+  .spec-arrow{color:var(--muted);font-size:.85rem}
+  .spec-cap{width:100%;font-size:11.5px;color:var(--muted)}
+  .spec-cap i{font-style:normal;letter-spacing:.07em;text-transform:uppercase;font-size:10px}
+  .gloss{border-bottom:1px dotted var(--muted);cursor:help}
+  .prov{margin-top:14px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);
+        display:flex;flex-wrap:wrap;gap:6px 14px}
+  .prov b{color:var(--ink-2);font-weight:600}
+
+  /* stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .tile .n{font-family:var(--f-display);font-size:1.7rem;font-weight:600;font-variant-numeric:tabular-nums;
+           letter-spacing:-.01em}
+  .tile .n small{font-size:.9rem;color:var(--muted);font-weight:400}
+  .tile .l{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .tile.hi{border-color:color-mix(in oklab,var(--accent) 45%,var(--line))}
+  .tile.hi .n{color:var(--accent-ink)}
+
+  /* section heads */
+  .sec{margin:34px 0 12px;display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+       border-bottom:1px solid var(--line);padding-bottom:8px}
+  .sec h2{font-family:var(--f-display);font-weight:600;font-size:1.15rem;margin:0}
+  .sec .hint{font-size:12.5px;color:var(--muted)}
+
+  /* scatter */
+  .chartcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 8px 8px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;padding:0 12px 6px;font-size:12.5px;color:var(--ink-2)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .gl{stroke:var(--line);stroke-width:1}
+  .axtxt{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+  .axlbl{fill:var(--ink-2);font-family:var(--f-ui);font-size:11.5px;font-weight:500}
+  .pt{stroke:var(--surface);stroke-width:1.5;cursor:pointer;transition:r .1s}
+  .ptlbl{fill:var(--ink-2);font-family:var(--f-ui);font-size:11px;font-weight:500;pointer-events:none}
+  .tip{position:fixed;pointer-events:none;z-index:20;background:var(--ink);color:var(--paper);
+       font-size:12px;line-height:1.4;padding:8px 11px;border-radius:7px;opacity:0;transition:opacity .1s;
+       max-width:270px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .tip b{color:var(--paper)}
+  .tip .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+  /* filters */
+  .filters{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:14px 0 6px}
+  .fg{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+  select{font-family:var(--f-ui);font-size:13px;color:var(--ink);background:var(--surface);
+         border:1px solid var(--line-2);border-radius:7px;padding:5px 26px 5px 9px;cursor:pointer;
+         appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+         background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .spacer{flex:1}
+  .count{font-size:12.5px;color:var(--muted);font-family:var(--f-mono)}
+
+  /* table */
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:940px}
+  thead th{position:sticky;top:0;background:var(--surface-2);text-align:right;font-size:11px;
+           letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);font-weight:600;
+           padding:10px 12px;white-space:nowrap;border-bottom:1px solid var(--line-2);cursor:pointer;user-select:none}
+  thead th.l{text-align:left}
+  thead th.sortable:hover{color:var(--accent-ink)}
+  th .ar{opacity:.5;font-size:9px}
+  th.act .ar{opacity:1;color:var(--accent-ink)}
+  tbody td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;
+           font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:13px}
+  tbody td.l{text-align:left;font-family:var(--f-ui)}
+  tbody tr:hover td{background:color-mix(in oklab,var(--accent) 6%,transparent)}
+  tbody tr:last-child td{border-bottom:none}
+  .mdl{font-weight:600;font-size:14px;color:var(--ink)}
+  a.mdl{border-bottom:none} a.mdl:hover{color:var(--accent-ink);border-bottom:1px solid var(--accent)}
+  .org{color:var(--muted);font-size:11px;font-family:var(--f-mono)}
+  .type{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+  .type .dot{width:8px;height:8px}
+  .params .pv{color:var(--ink)} .params .pu{color:var(--muted);font-size:11px}
+  .bar{height:5px;border-radius:3px;background:var(--barbg);margin-top:4px;overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:3px;background:color-mix(in oklab,var(--accent) 55%,var(--muted))}
+  .cer{color:var(--ink);font-size:13.5px}
+  .ci{color:var(--muted);font-size:11px}
+  .chip{display:inline-block;font-size:11px;font-family:var(--f-ui);font-weight:600;padding:1.5px 7px;
+        border-radius:20px;border:1px solid transparent;letter-spacing:.01em}
+  .chip.verbatim{color:var(--vlm);background:color-mix(in oklab,var(--vlm) 12%,transparent);border-color:color-mix(in oklab,var(--vlm) 30%,transparent)}
+  .chip.clean{color:var(--spec);background:color-mix(in oklab,var(--spec) 13%,transparent);border-color:color-mix(in oklab,var(--spec) 32%,transparent)}
+  .chip.mixed{color:var(--muted);background:color-mix(in oklab,var(--muted) 12%,transparent);border-color:color-mix(in oklab,var(--muted) 28%,transparent)}
+  .furn-n{color:var(--muted);font-size:11px;margin-left:5px}
+  .info{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;
+        border-radius:50%;border:1px solid var(--line-2);color:var(--muted);font-size:9.5px;font-weight:700;
+        font-style:normal;cursor:help;vertical-align:middle;margin-left:5px;font-family:var(--f-ui)}
+  .info:hover{color:var(--accent-ink);border-color:var(--accent)}
+  .chip[data-tip]{cursor:help}
+
+  /* tier band row */
+  tr.band td{background:var(--band);text-align:left;padding:8px 12px;border-bottom:1px solid var(--line-2)}
+  .band .tl{font-family:var(--f-display);font-weight:600;font-size:13px;color:var(--ink);letter-spacing:.01em}
+  .band .tn{font-size:11.5px;color:var(--muted);font-family:var(--f-ui);margin-left:8px}
+
+  .secnote{margin:10px 2px 0;font-size:12.5px;color:var(--muted);line-height:1.55;max-width:75ch}
+  .err-flag{color:var(--class);font-size:10.5px;font-family:var(--f-ui);font-weight:600;margin-left:6px}
+  .foot{margin-top:26px;font-size:12.5px;color:var(--muted);line-height:1.6}
+  .foot b{color:var(--ink-2)}
+  .foot ul{margin:.4rem 0;padding-left:1.1rem} .foot li{margin:.2rem 0}
+  @media (max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)} h1{font-size:1.7rem}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Historical-text OCR · <a href="https://huggingface.co/datasets/finebooks/bhl-eval-impact">IMPACT-BHL ground truth</a></div>
+    <h1>BHL OCR Leaderboard</h1>
+    <p class="lede">How well OCR and <span class="gloss" data-tip="AI models that look at the page image and write out the text — the same family as chat models — rather than matching letter shapes like classical OCR.">vision-language models</span> transcribe 18th–19th-century book pages — a
+      broken-out scorecard, not a single grade. Ranked on micro-averaged <span class="gloss" data-tip="Of every 100 characters in the correct text, how many the model got wrong. Lower is better: .024 means about 2 or 3 slips per 100 characters.">character error rate</span>, read as
+      <b>confidence intervals, not ranks</b>.</p>
+    <p class="lede" style="font-size:.95rem;margin-top:.5rem">The test material is a <span class="gloss" data-tip="The correct answer: a transcription made by a person, letter for letter, that each model’s output is compared against.">ground truth</span> made by hand long before today’s models: 2,165 pages
+      from six natural-history volumes, expert-transcribed for the EU’s IMPACT digitisation
+      programme (with BHL-Europe) in English, German, French and Latin. This board reuses that
+      older ground truth to ask a current question — which of the new models actually reads old
+      books best — and breaks the answer out, because models fail differently: some misread
+      letters, some invent text on near-empty pages, some cannot stop repeating themselves.</p>
+    <div class="specimen">
+      <span class="spec-dip">clara intra Philoſophiæ Thalamos admiſsâ luce</span>
+      <span class="spec-arrow">→</span>
+      <span class="spec-read">clara intra philosophiæ thalamos admissâ luce</span>
+      <span class="spec-cap">one line of the ground truth as each lane scores it — <i>diplomatic</i> keeps the long&nbsp;ſ, <i>reading</i> folds it · <cite style="font-style:italic">Piscium querelae</cite>, 1708</span>
+    </div>
+    <div class="prov" id="prov"></div>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="filters">
+    <div class="fg">Type <select id="fType"><option value="">all</option><option>VLM</option><option>specialist</option><option>classical</option></select></div>
+    <div class="fg">Size <select id="fSize"><option value="">all</option><option value="s">≤1B</option><option value="m">1–10B</option><option value="l">&gt;10B</option></select></div>
+    <div class="fg">Reads <select id="fReads"><option value="">all</option><option>verbatim</option><option>clean</option><option>mixed</option></select></div>
+    <div class="spacer"></div>
+    <span class="hint" style="font-size:12.5px;color:var(--muted)">click a row for per-language CER</span>
+    <div class="count" id="count"></div>
+  </div>
+  <div class="tblwrap">
+    <table id="tbl">
+      <thead><tr>
+        <th class="l sortable" data-k="name">Model <span class="ar">▾</span></th>
+        <th class="l" data-k="type">Type <span class="info" tabindex="0" data-tip="How the model works: <b>VLM</b> = general vision-language model · <b>specialist</b> = OCR-specific model · <b>classical</b> = non-neural OCR engine.">i</span></th>
+        <th class="sortable" data-k="params">Params <span class="info" tabindex="0" data-tip="Model size in billions of parameters, <b>measured</b> from the repo's safetensors index (all weights, vision towers included) rather than taken from the model's name — GLM-OCR is 1.33B, not the 0.9B it is usually listed as, and olmOCR-2-<b>7B</b> is 8.29B. Classical engines have no comparable count and are left off the scatter below.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable act" data-k="cer_read">CER · reading <span class="info" tabindex="0" data-tip="Character error rate, <b>reading</b> lane — NFKC, case-folded, de-hyphenated, markup stripped, body only. Reading ability, not transcription convention. Micro-averaged across all scored pages; <b>lower is better</b>. The board ranks on this.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="cer_dip">CER · dip <span class="info" tabindex="0" data-tip="Character error rate, <b>diplomatic</b> lane — NFC, case-sensitive, keeps long-s (ſ), ligatures and diacritics. Fidelity to the original spelling; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="content_cer">Content CER <span class="info" tabindex="0" data-tip="CER · reading over the 1,737 <b>content</b> pages only — ordinary text pages.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="sparse_cer">Sparse CER <span class="info" tabindex="0" data-tip="CER · reading over the 428 <b>sparse/blank</b> pages — plates, blanks, near-empty pages. Values ≫1 mean the model hallucinates text where there is almost none. This stratum is where models diverge most.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="recall">Recall <span class="info" tabindex="0" data-tip="Fraction of body ground-truth words present in the output — alignment-free and format-immune. Read co-equally with CER (a model can read more yet align worse). <b>Higher is better</b>.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="overx">Over-x <span class="info" tabindex="0" data-tip="Over-extraction — fraction of output tokens absent from the full ground truth. Flags hallucinated / boilerplate text; scored against full text so faithful furniture is not charged as junk. <b>Lower is better</b>.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="loop">Loop % <span class="info" tabindex="0" data-tip="Fraction of pages where generation hit its token cap mid <b>repetition loop</b> — on this corpus, essentially always a model that transcribed the page and could not stop. Looped pages are <b>excluded</b> from the row's other numbers, so a higher loop&nbsp;% means the row was scored on an easier effective page set. Read alongside CER, never alone; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
+        <th class="l" data-k="furn">Reads <span class="info" tabindex="0" data-tip="Does the model transcribe page <b>furniture</b> — running heads, page numbers, catch-words? This is a <b>policy</b>, not accuracy: the body-only CER neither rewards nor penalises it. &nbsp;<b>verbatim</b> keeps furniture · <b>clean</b> drops it · <b>mixed</b> some.">i</span></th>
+      </tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+  <p class="secnote" id="loopNote"></p>
+  <p class="secnote">Sparse and blank pages are where models diverge most: strong content OCR can coexist
+    with runaway hallucination on near-empty pages, and the aggregate CER shows it.</p>
+
+  <div class="sec"><h2>Size vs. accuracy</h2>
+    <span class="hint" id="scatterHint">params (log) vs CER · lower-left is better</span></div>
+  <div class="chartcard">
+    <div class="legend" id="legend"></div>
+    <svg id="scatter" viewBox="0 0 720 400" role="img" aria-label="Parameters versus character error rate"></svg>
+  </div>
+
+  <div class="foot">
+    <p><b>Reading the board.</b> Where 95% bootstrap CIs overlap, differences are within noise — that
+    overlap <i>is</i> the finding, not a defect. CIs resample volumes (six books), so they are wide by
+    design.</p>
+    <ul>
+      <li><b>A page can end three ways.</b> Scored; <i>looped</i> (hit its token cap mid repetition
+      loop — excluded from the row's aggregates and counted in Loop&nbsp;%); or <i>errored</i> (the
+      producer failed — any error makes the row ineligible for ranking under fail-closed scoring).</li>
+      <li><b>CER · reading</b> folds long-s/case/ligatures (reading ability); <b>CER · dip</b> keeps them
+      (diplomatic fidelity). <b>Recall</b> is format-immune coverage, read co-equally with CER.</li>
+      <li><b>Reads</b> is a <i>policy</i>, not a quality score: whether a model emits page furniture
+      (running heads, page numbers). The body-only headline neither rewards nor penalizes it.</li>
+      <li><b>Params are measured, not quoted.</b> Every weight in the model repo's safetensors index,
+      summed across dtypes, so vision towers count. Names mislead: GLM-OCR is <b>1.33B</b>, not the
+      0.9B it is usually listed as, and olmOCR-2-<b>7B</b> is <b>8.29B</b>. Classical engines
+      (Tesseract, PP-OCRv6) have no comparable count and are omitted from the scatter.</li>
+      <li id="excludedNote"></li>
+      <li><b>We ran the inference ourselves, for every model on the board</b> — a pinned container
+      image, a pinned model revision, a pinned script commit, and the id of the job that produced
+      each score. A hosted inference router does not record which provider served a request, at
+      what quantization, or under what serving configuration — and CER is sensitive to all three —
+      so routed scores are not admissible here.</li>
+      <li><b>Held for v1.1:</b> surya-ocr-2 and PP-OCRv6 join the board once their runs meet the
+      same bar.</li>
+      <li><b>Docs & data:</b> <a href="https://github.com/finebooks/bhl-ocr-eval">bhl-ocr-eval</a> —
+      methodology in DESIGN.md, plain-language guide in GLOSSARY.md, findings and caveats in RESULTS.md.
+      Ground truth: <a href="https://huggingface.co/datasets/finebooks/bhl-eval-impact">finebooks/bhl-eval-impact</a>
+      (IMPACT Centre of Competence / BHL-Europe, CC-BY).</li>
+    </ul>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+/* __BAKE_START__ — generated by scripts/bake_leaderboard.py; do not edit by hand */
+const PROV={"norm": "2026-07-20a", "scorer": "3.0", "postproc": "3", "grapheme": "codepoint", "volumes": 6, "full_pages": 2165, "baked": "2026-08-04"};
+const DATA=[{"name": "dots.ocr", "org": "rednote-hilab", "model_id": "rednote-hilab/dots.ocr", "repo": "rednote-hilab/dots.ocr", "pipeline": null, "type": "specialist", "params": 3.039, "cer_read": 0.0235, "cer_dip": 0.056, "ci": [0.0156, 0.0318], "recall": 0.9704, "overx": 0.0331, "furn": 0.3289, "lang": {"de": 0.0215, "en": 0.0302, "fr": 0.0108, "la": 0.048}, "n": 2081, "err": 0, "loop": 0.0388, "eligible": true, "content_cer": 0.022, "sparse_cer": 1.7869}, {"name": "dots.mocr", "org": "rednote-hilab", "model_id": "rednote-hilab/dots.mocr", "repo": "rednote-hilab/dots.mocr", "pipeline": null, "type": "specialist", "params": 3.039, "cer_read": 0.0237, "cer_dip": 0.0503, "ci": [0.0143, 0.0334], "recall": 0.9836, "overx": 0.0176, "furn": 0.201, "lang": {"de": 0.0261, "en": 0.029, "fr": 0.0097, "la": 0.0487}, "n": 2146, "err": 0, "loop": 0.00878, "eligible": true, "content_cer": 0.0216, "sparse_cer": 2.2343}, {"name": "OvisOCR2", "org": "ATH-MaaS", "model_id": "ATH-MaaS/OvisOCR2", "repo": "ATH-MaaS/OvisOCR2", "pipeline": null, "type": "specialist", "params": 0.853, "cer_read": 0.0305, "cer_dip": 0.057, "ci": [0.0232, 0.0357], "recall": 0.9614, "overx": 0.0465, "furn": 0.8878, "lang": {"de": 0.036, "en": 0.0278, "fr": 0.026, "la": 0.0661}, "n": 2110, "err": 0, "loop": 0.0254, "eligible": true, "content_cer": 0.028, "sparse_cer": 2.794}, {"name": "PaddleOCR-VL-1.6", "org": "PaddlePaddle", "model_id": "PaddlePaddle/PaddleOCR-VL-1.6", "repo": "PaddlePaddle/PaddleOCR-VL-1.6", "pipeline": null, "type": "specialist", "params": 0.959, "cer_read": 0.0392, "cer_dip": 0.0513, "ci": [0.0259, 0.0499], "recall": 0.9415, "overx": 0.0601, "furn": 0.8092, "lang": {"de": 0.0434, "en": 0.0418, "fr": 0.028, "la": 0.0666}, "n": 2025, "err": 0, "loop": 0.06467, "eligible": true, "content_cer": 0.0367, "sparse_cer": 2.6933}, {"name": "olmOCR-2", "org": "allenai", "model_id": "allenai/olmOCR-2-7B-1025-FP8", "repo": "allenai/olmOCR-2-7B-1025-FP8", "pipeline": null, "type": "specialist", "params": 8.294, "cer_read": 0.0432, "cer_dip": 0.0695, "ci": [0.0199, 0.0694], "recall": 0.9573, "overx": 0.0517, "furn": 0.2642, "lang": {"de": 0.0345, "en": 0.0652, "fr": 0.0101, "la": 0.0672}, "n": 2153, "err": 0, "loop": 0.00554, "eligible": true, "content_cer": 0.0302, "sparse_cer": 13.6418}, {"name": "LightOnOCR-2", "org": "lightonai", "model_id": "lightonai/LightOnOCR-2-1B", "repo": "lightonai/LightOnOCR-2-1B", "pipeline": null, "type": "specialist", "params": 1.006, "cer_read": 0.0489, "cer_dip": 0.0864, "ci": [0.0269, 0.0706], "recall": 0.9688, "overx": 0.0548, "furn": 0.4849, "lang": {"de": 0.0463, "en": 0.0693, "fr": 0.0158, "la": 0.0521}, "n": 2120, "err": 0, "loop": 0.02079, "eligible": true, "content_cer": 0.0351, "sparse_cer": 15.792}, {"name": "GLM-OCR", "org": "zai-org", "model_id": "zai-org/GLM-OCR", "repo": "zai-org/GLM-OCR", "pipeline": null, "type": "specialist", "params": 1.325, "cer_read": 0.0491, "cer_dip": 0.0669, "ci": [0.0256, 0.072], "recall": 0.9674, "overx": 0.0584, "furn": 0.3657, "lang": {"de": 0.0535, "en": 0.0674, "fr": 0.0117, "la": 0.0704}, "n": 2154, "err": 0, "loop": 0.00508, "eligible": true, "content_cer": 0.0236, "sparse_cer": 26.929}, {"name": "Qwen3.5-9B", "org": "Qwen", "model_id": "Qwen/Qwen3.5-9B", "repo": "Qwen/Qwen3.5-9B", "pipeline": null, "type": "VLM", "params": 9.653, "cer_read": 0.0507, "cer_dip": 0.0674, "ci": [0.0292, 0.0771], "recall": 0.9587, "overx": 0.0632, "furn": 0.6215, "lang": {"de": 0.0377, "en": 0.0696, "fr": 0.0236, "la": 0.0961}, "n": 2132, "err": 0, "loop": 0.01524, "eligible": true, "content_cer": 0.0314, "sparse_cer": 19.9827}, {"name": "Qianfan-OCR", "org": "baidu", "model_id": "baidu/Qianfan-OCR", "repo": "baidu/Qianfan-OCR", "pipeline": null, "type": "specialist", "params": 4.741, "cer_read": 0.0575, "cer_dip": 0.0734, "ci": [0.0312, 0.0876], "recall": 0.954, "overx": 0.0659, "furn": 0.8491, "lang": {"de": 0.0419, "en": 0.0723, "fr": 0.0255, "la": 0.213}, "n": 2142, "err": 0, "loop": 0.01062, "eligible": true, "content_cer": 0.0404, "sparse_cer": 17.894}, {"name": "Unlimited-OCR", "org": "baidu", "model_id": "baidu/Unlimited-OCR", "repo": "baidu/Unlimited-OCR", "pipeline": null, "type": "specialist", "params": 3.336, "cer_read": 0.0604, "cer_dip": 0.0885, "ci": [0.0351, 0.082], "recall": 0.9537, "overx": 0.0628, "furn": 0.8145, "lang": {"de": 0.0673, "en": 0.0703, "fr": 0.033, "la": 0.0997}, "n": 2155, "err": 0, "loop": 0.00462, "eligible": true, "content_cer": 0.0451, "sparse_cer": 16.1853}, {"name": "DeepSeek-OCR", "org": "deepseek-ai", "model_id": "deepseek-ai/DeepSeek-OCR", "repo": "deepseek-ai/DeepSeek-OCR", "pipeline": null, "type": "specialist", "params": 3.336, "cer_read": 0.0617, "cer_dip": 0.0899, "ci": [0.0467, 0.0754], "recall": 0.9206, "overx": 0.0892, "furn": 0.1868, "lang": {"de": 0.091, "en": 0.0584, "fr": 0.0374, "la": 0.1076}, "n": 2153, "err": 0, "loop": 0.00554, "eligible": true, "content_cer": 0.059, "sparse_cer": 2.9627}, {"name": "DeepSeek-OCR-2", "org": "deepseek-ai", "model_id": "deepseek-ai/DeepSeek-OCR-2", "repo": "deepseek-ai/DeepSeek-OCR-2", "pipeline": null, "type": "specialist", "params": 3.389, "cer_read": 0.062, "cer_dip": 0.0801, "ci": [0.0453, 0.0833], "recall": 0.9262, "overx": 0.0642, "furn": 0.1859, "lang": {"de": 0.1073, "en": 0.0493, "fr": 0.039, "la": 0.1212}, "n": 2158, "err": 0, "loop": 0.00323, "eligible": true, "content_cer": 0.06, "sparse_cer": 2.0926}, {"name": "Tesseract 5", "org": "\u2014", "model_id": "tesseract-5", "repo": null, "pipeline": {"engine": "tesseract 5 \u2014 CPU binary, no Hub repo"}, "type": "classical", "params": null, "cer_read": 0.0642, "cer_dip": 0.0788, "ci": [0.0421, 0.0794], "recall": 0.921, "overx": 0.0838, "furn": 0.6827, "lang": {"de": 0.0863, "en": 0.0673, "fr": 0.0365, "la": 0.0958}, "n": 2165, "err": 0, "loop": 0.0, "eligible": true, "content_cer": 0.0591, "sparse_cer": 5.4888}, {"name": "SmolDocling", "org": "ds4sd", "model_id": "ds4sd/SmolDocling-256M-preview", "repo": "ds4sd/SmolDocling-256M-preview", "pipeline": null, "type": "specialist", "params": 0.256, "cer_read": 0.1965, "cer_dip": 0.207, "ci": [0.1353, 0.2511], "recall": 0.8519, "overx": 0.2741, "furn": 0.199, "lang": {"de": 0.1896, "en": 0.2209, "fr": 0.1579, "la": 0.2277}, "n": 2050, "err": 0, "loop": 0.05312, "eligible": true, "content_cer": 0.1946, "sparse_cer": 2.1763}];
+const EXCLUDED=[];
+/* __BAKE_END__ */
+const CATCOL={VLM:"var(--vlm)",specialist:"var(--spec)",classical:"var(--class)"};
+const policy=v=> v>=0.7?"verbatim": v<=0.4?"clean":"mixed";
+const POL_DESC={verbatim:"<b>Verbatim</b> — emits page furniture (running heads, page numbers).",
+                clean:"<b>Clean</b> — drops furniture; transcribes the body only.",
+                mixed:"<b>Mixed</b> — emits some furniture, drops some."};
+const tipFor=(pol,furn)=>`${POL_DESC[pol]}<br>furniture recall ${pf(furn)} — a policy, not a quality score.`;
+const pf=v=>v.toFixed(3).replace(/^0/,"");           // .038
+const fm=v=>v==null?"—":pf(v);                       // null-safe (missing stratum, classical rows)
+const lp=v=>v==null?"—":(v*100).toFixed(2)+"%";      // loop rate as a percentage
+const sizeBucket=p=> p==null?"":p<=1?"s":p<=10?"m":"l";
+
+/* ---- provenance line + tiles ---- */
+document.getElementById("prov").innerHTML=[
+ ["norm",PROV.norm],["scorer",PROV.scorer],["postproc",PROV.postproc],["grapheme",PROV.grapheme],
+ ["headline","CER · reading lane, body only"],["CIs","resample volumes ("+PROV.volumes+" books)"],
+ ["updated",PROV.baked],
+].map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join("");
+document.getElementById("tiles").innerHTML=[
+ [String(DATA.length),"models · ranked",""],
+ [PROV.full_pages.toLocaleString(),"pages · every model","hi"],
+ [String(PROV.volumes),"volumes",""],
+].map(([n,l,c])=>`<div class="tile ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+
+/* ---- scatter ---- */
+/* Points above this CER are left off the chart rather than compressing everyone else into a
+   corner. It is the one editorial choice here; both axis ranges are derived from the data, so a
+   roster change can never leave the chart claiming a scale it no longer has. */
+const CER_CUTOFF=0.30;
+const PTICKS=[0.1,0.25,0.5,1,2,5,10,20,50,100,200,500];
+function scatter(){
+  const W=720,H=400,mL=52,mR=18,mT=16,mB=42, iw=W-mL-mR, ih=H-mT-mB;
+  const pts=DATA.filter(d=>d.params && d.cer_read<=CER_CUTOFF);   // neural, on-scale
+  if(!pts.length){document.getElementById("scatter").innerHTML="";return;}
+  // name what the chart leaves out, from the data, so the caption cannot go stale
+  const noParams=DATA.filter(d=>!d.params).length;
+  const offScale=DATA.filter(d=>d.params&&d.cer_read>CER_CUTOFF).map(d=>d.name);
+  const notes=[noParams?`${noParams} classical engine${noParams>1?"s":""} (no parameter count)`:null,
+               offScale.length?`${offScale.join(", ")} off-scale above CER ${pf(CER_CUTOFF)}`:null].filter(Boolean);
+  document.getElementById("scatterHint").textContent=
+    "params (log) vs CER · lower-left is better"+(notes.length?" · "+notes.join(" · "):"");
+  // x: snap out to the enclosing round tick either side. y: round up to the next 0.05.
+  const ps=pts.map(d=>d.params);
+  const lo=[...PTICKS].reverse().find(t=>t<=Math.min(...ps)) ?? Math.min(...ps);
+  const hi=PTICKS.find(t=>t>=Math.max(...ps)) ?? Math.max(...ps);
+  const xmin=Math.log10(lo), xmax=Math.log10(hi);
+  const ymax=Math.round(Math.max(0.05,Math.ceil(Math.max(...pts.map(d=>d.cer_read))/0.05)*0.05)*100)/100;
+  const X=p=>mL+ (Math.log10(p)-xmin)/(xmax-xmin)*iw;
+  const Y=v=>mT+ (v/ymax)*ih;
+  let s=`<rect x="${mL}" y="${mT}" width="${iw}" height="${ih}" fill="none"/>`;
+  // grid + y ticks
+  for(let v=0;v<=ymax+1e-9;v+=0.05){const y=Y(v);
+    s+=`<line class="gl" x1="${mL}" y1="${y.toFixed(1)}" x2="${mL+iw}" y2="${y.toFixed(1)}" ${v?'':'stroke-opacity="0"'}/>`;
+    s+=`<text class="axtxt" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${pf(v)}</text>`;}
+  // x ticks
+  PTICKS.filter(p=>p>=lo&&p<=hi).forEach(p=>{const x=X(p);
+    s+=`<line class="gl" x1="${x.toFixed(1)}" y1="${mT}" x2="${x.toFixed(1)}" y2="${mT+ih}" stroke-opacity=".5"/>`;
+    s+=`<text class="axtxt" x="${x.toFixed(1)}" y="${mT+ih+16}" text-anchor="middle">${p<1?p:p+'B'}</text>`;});
+  s+=`<text class="axlbl" x="${mL+iw/2}" y="${H-4}" text-anchor="middle">parameters (log scale)</text>`;
+  s+=`<text class="axlbl" transform="translate(14,${mT+ih/2}) rotate(-90)" text-anchor="middle">CER · reading (lower better)</text>`;
+  // baseline axes
+  s+=`<line class="gl" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ih}"/>`;
+  /* Label every point that fits without touching another point or label — computed from the
+     baked positions, so the set of labels adapts to whatever the next bake puts on the chart.
+     Points in tight clusters go unlabelled (hover still names them). */
+  const CW=6.4, LH=12, placed=[];
+  const labelFit=(d,x,y)=>{
+    const w=d.name.length*CW;
+    for(const [dx,dy,anchor] of [[10,4,"start"],[-10,4,"end"],[0,-11,"middle"],[0,17,"middle"]]){
+      const x0=anchor==="start"?x+dx:anchor==="end"?x+dx-w:x+dx-w/2, y0=y+dy-LH+3;
+      if(x0<mL-30||x0+w>mL+iw+30||y0<mT-4||y0+LH>mT+ih+18)continue;
+      if(placed.some(b=>!(x0+w<b.x0||b.x1<x0||y0+LH<b.y0||b.y1<y0)))continue;
+      if(pts.some(o=>o!==d&&X(o.params)>x0-9&&X(o.params)<x0+w+9&&Y(o.cer_read)>y0-9&&Y(o.cer_read)<y0+LH+9))continue;
+      placed.push({x0,y0,x1:x0+w,y1:y0+LH});
+      return {dx,dy,anchor};
+    }
+    return null;
+  };
+  let labels="";
+  pts.forEach(d=>{const x=X(d.params),y=Y(d.cer_read);
+    s+=`<circle class="pt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.5" fill="${CATCOL[d.type]}" data-n="${d.name}"/>`;
+    const fit=labelFit(d,x,y);
+    if(fit)labels+=`<text class="ptlbl" x="${(x+fit.dx).toFixed(1)}" y="${(y+fit.dy).toFixed(1)}" text-anchor="${fit.anchor}">${d.name}</text>`;
+  });
+  s+=labels;
+  document.getElementById("scatter").innerHTML=s;
+  document.getElementById("legend").innerHTML=Object.entries(CATCOL)
+    .map(([k,c])=>`<span><i class="dot" style="background:${c}"></i>${k}</span>`).join("")
+    +`<span style="color:var(--muted)">each point = one model · hover for detail</span>`;
+  // hover
+  const tip=document.getElementById("tip");
+  document.querySelectorAll("#scatter .pt").forEach(c=>{
+    const d=DATA.find(x=>x.name===c.dataset.n);
+    c.addEventListener("mousemove",e=>{tip.style.opacity=1;
+      tip.style.left=Math.min(e.clientX+14,innerWidth-230)+"px";tip.style.top=(e.clientY+14)+"px";
+      tip.innerHTML=`<b>${d.name}</b> · ${d.params}B<br><span class="mono">CER ${pf(d.cer_read)} · recall ${pf(d.recall)} · loop ${lp(d.loop)} · ${policy(d.furn)}</span>`;
+      c.setAttribute("r","8.5");});
+    c.addEventListener("mouseleave",()=>{tip.style.opacity=0;c.setAttribute("r","6.5");});
+  });
+}
+
+/* ---- table ---- */
+let sortK="cer_read",sortDir=1;
+function render(){
+  const fT=fType.value,fS=fSize.value,fR=fReads.value;
+  let rows=DATA.filter(d=>(!fT||d.type===fT)&&(!fS||sizeBucket(d.params)===fS)&&(!fR||policy(d.furn)===fR));
+  const cmp=(a,b)=>{let av=a[sortK],bv=b[sortK];
+    if(sortK==="name")return sortDir*av.localeCompare(bv);
+    if(av==null)return 1; if(bv==null)return -1; return sortDir*(av-bv);};
+  rows.sort(cmp);
+  let html="";
+  rows.forEach(d=>{
+    const pol=policy(d.furn);
+    const pbar=d.params?`<div class="bar"><i style="width:${Math.max(3,Math.log10(d.params/0.2)/Math.log10(120/0.2)*100).toFixed(0)}%"></i></div>`:"";
+    const cbar=`<div class="bar"><i style="width:${Math.min(100,d.cer_read/0.30*100).toFixed(0)}%;background:color-mix(in oklab,var(--class) ${Math.min(90,d.cer_read/0.30*100).toFixed(0)}%,var(--spec))"></i></div>`;
+    const nameCell=d.repo
+      ?`<a class="mdl" href="https://huggingface.co/${d.repo}">${d.name}</a>`
+      :`<span class="mdl">${d.name}</span>`;
+    html+=`<tr data-n="${d.name}">
+      <td class="l">${nameCell}${d.err?`<span class="err-flag" data-tip="${d.err} of ${d.n+d.err} pages errored — ineligible under fail-closed scoring; values are conditional on the ${d.n} successful pages.">⚠ ${d.err} err</span>`:""}<br><span class="org">${d.org}</span></td>
+      <td class="l"><span class="type"><i class="dot" style="background:${CATCOL[d.type]}"></i>${d.type}</span></td>
+      <td class="params">${d.params!=null?`<span class="pv">${d.params}</span><span class="pu">B</span>${pbar}`:'<span class="pu">—</span>'}</td>
+      <td><span class="cer">${pf(d.cer_read)}</span> <span class="ci">[${pf(d.ci[0])}–${pf(d.ci[1])}]</span>${cbar}</td>
+      <td>${pf(d.cer_dip)}</td>
+      <td>${fm(d.content_cer)}</td>
+      <td>${d.sparse_cer==null?"—":d.sparse_cer>=1?d.sparse_cer.toFixed(1):pf(d.sparse_cer)}</td>
+      <td>${pf(d.recall)}</td>
+      <td>${pf(d.overx)}</td>
+      <td>${lp(d.loop)}</td>
+      <td class="l"><span class="chip ${pol}" data-tip="${tipFor(pol,d.furn)}">${pol}</span><span class="furn-n">${pf(d.furn)}</span></td>
+    </tr>`;
+  });
+  body.innerHTML=html;
+  count.textContent=rows.length+" of "+DATA.length+" models";
+  document.querySelectorAll("thead th").forEach(th=>{th.classList.toggle("act",th.dataset.k===sortK);
+    const ar=th.querySelector(".ar"); if(ar)ar.textContent=(th.dataset.k===sortK&&sortDir>0)?"▾":(th.dataset.k===sortK?"▴":"▾");});
+  bindRows();
+}
+function bindRows(){
+  const tip=document.getElementById("tip");
+  document.querySelectorAll("#body tr[data-n]").forEach(tr=>{
+    const d=DATA.find(x=>x.name===tr.dataset.n);
+    tr.addEventListener("click",(e)=>{
+      if(e.target.closest("a"))return;   // model link: navigate, don't expand
+      const nx=tr.nextElementSibling;
+      if(nx&&nx.classList.contains("exp")){nx.remove();return;}
+      const L=Object.entries(d.lang).map(([k,v])=>`${k} ${pf(v)}`).join("  ·  ");
+      const r=document.createElement("tr");r.className="exp";
+      r.innerHTML=`<td colspan="11" style="text-align:left;background:var(--band);font-family:var(--f-mono);font-size:12px;color:var(--ink-2);padding:8px 14px">
+        per-language CER&nbsp; ${L}&nbsp; · &nbsp;95% CI [${pf(d.ci[0])}–${pf(d.ci[1])}]&nbsp; · &nbsp;n=${d.n}, errors=${d.err}</td>`;
+      tr.after(r);
+    });
+  });
+}
+["fType","fSize","fReads"].forEach(id=>document.getElementById(id).addEventListener("change",render));
+/* drop filter options no model in DATA matches, so no choice ever returns an empty table.
+   Self-correcting: an option reappears as soon as a model of that kind is on the board. */
+(function(){
+  const has={fType:d=>d.type,fSize:d=>sizeBucket(d.params),fReads:d=>policy(d.furn)};
+  for(const [id,key] of Object.entries(has)){
+    const present=new Set(DATA.map(key));
+    document.getElementById(id).querySelectorAll("option").forEach(o=>{
+      const v=o.value||o.textContent;
+      if(o.value!==""&&!present.has(v))o.remove();
+    });
+  }
+})();
+document.querySelectorAll("thead th.sortable").forEach(th=>th.addEventListener("click",(e)=>{
+  if(e.target.closest(".info"))return;   // info icon: show tooltip, don't sort
+  const k=th.dataset.k; if(sortK===k)sortDir*=-1; else{sortK=k;sortDir=(k==="name")?1:(k==="recall")?-1:1;} render();}));
+/* delegated tooltip for anything carrying data-tip (chips, the Reads info icon) */
+(function(){const tipEl=document.getElementById("tip");let cur=null;
+  const show=(t,x,y)=>{cur=t;tipEl.innerHTML=t.getAttribute("data-tip");tipEl.style.opacity=1;
+    tipEl.style.left=Math.min(x+14,innerWidth-282)+"px";tipEl.style.top=(y+16)+"px";};
+  const hide=()=>{cur=null;tipEl.style.opacity=0;};
+  document.addEventListener("mouseover",e=>{const t=e.target.closest("[data-tip]");if(t)show(t,e.clientX,e.clientY);});
+  document.addEventListener("mousemove",e=>{if(!cur)return;const t=e.target.closest("[data-tip]");
+    if(t===cur){tipEl.style.left=Math.min(e.clientX+14,innerWidth-282)+"px";tipEl.style.top=(e.clientY+16)+"px";}});
+  document.addEventListener("mouseout",e=>{if(cur&&e.target.closest("[data-tip]")===cur)hide();});
+  document.addEventListener("focusin",e=>{const t=e.target.closest("[data-tip]");
+    if(t){const r=t.getBoundingClientRect();show(t,r.right,r.bottom);}});
+  document.addEventListener("focusout",()=>hide());
+})();
+const exNote=document.getElementById("excludedNote");
+if(EXCLUDED.length){exNote.innerHTML=`<b>Excluded (emergent, not denylist):</b> ${EXCLUDED.map(e=>`${e.name} (${e.err}/${e.n} pages errored)`).join(" · ")} — every page errored, so no score exists.`;}
+else{exNote.remove();}
+/* the loop% selection-bias caveat, computed from the data so it cannot go stale */
+(function(){
+  const loopers=DATA.filter(d=>d.loop>0);
+  if(!loopers.length)return;
+  const w=loopers.reduce((a,b)=>a.loop>b.loop?a:b);
+  document.getElementById("loopNote").innerHTML=
+    `<b>Loop % carries a selection bias.</b> Looped pages are excluded from that row's other numbers, `+
+    `so a high loop rate means the row is scored with its hardest pages removed — ${w.name} at `+
+    `${lp(w.loop)} is scored on ${(100-w.loop*100).toFixed(1)}% of the corpus. Read it alongside CER, never on its own.`;
+})();
+scatter();render();
+</script>
+
+</body>
+</html>
