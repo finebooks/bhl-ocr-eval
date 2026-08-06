@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The board is served inside a Space iframe, and huggingface.co refuses to be framed:
+     every link has to leave the iframe or it renders as "refused to connect". -->
+<base target="_blank">
 <title>BHL OCR Leaderboard</title>
 <style>
   /* IM Fell English — Igino Marini's digitisation of the 17th-c. Fell types (SIL OFL),
