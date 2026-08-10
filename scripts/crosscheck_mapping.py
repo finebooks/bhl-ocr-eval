@@ -23,7 +23,7 @@ from huggingface_hub import hf_hub_download
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "scoring"))
 import normalizers as N  # noqa: E402
 
-NEW = "finebooks/bhl-eval-impact"
+NEW = "finebooks/bhl-impact-gt"
 OLD = "davanstrien/bhl-impact-groundtruth"
 
 

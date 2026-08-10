@@ -2,7 +2,7 @@
 
 A harness for evaluating OCR models — especially VLM-based OCR — on historical printed books. It
 builds on the IMPACT-BHL ground truth
-([`finebooks/bhl-eval-impact`](https://huggingface.co/datasets/finebooks/bhl-eval-impact)): 2,165
+([`finebooks/bhl-impact-gt`](https://huggingface.co/datasets/finebooks/bhl-impact-gt)): 2,165
 pages from six 18th–19th-century natural-history volumes, hand-transcribed by experts for the EU's
 IMPACT digitisation programme with BHL-Europe.
 

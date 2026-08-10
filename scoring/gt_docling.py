@@ -1,4 +1,4 @@
-"""Pure helpers to read the finebooks/bhl-eval-impact `docling` column.
+"""Pure helpers to read the finebooks/bhl-impact-gt `docling` column.
 
 The dataset ships NO separate regions column — the `DoclingDocument` is the region source. Its flat
 `texts` list is in reading order (the card: "three views, one pass … region order identical by
