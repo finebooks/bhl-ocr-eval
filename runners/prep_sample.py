@@ -16,7 +16,7 @@ import random
 import sys
 from collections import defaultdict
 
-SRC = "finebooks/bhl-eval-impact"
+SRC = "finebooks/bhl-impact-gt"
 STRATA = ("content", "sparse_blank")
 SAMPLER_VERSION = "1.0"
 

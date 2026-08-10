@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The board is served inside a Space iframe, and huggingface.co refuses to be framed:
+     every link has to leave the iframe or it renders as "refused to connect". -->
+<base target="_blank">
 <title>BHL OCR Leaderboard</title>
 <style>
   /* IM Fell English — Igino Marini's digitisation of the 17th-c. Fell types (SIL OFL),
@@ -166,7 +169,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">Historical-text OCR · <a href="https://huggingface.co/datasets/finebooks/bhl-eval-impact">IMPACT-BHL ground truth</a></div>
+    <div class="kicker">Historical-text OCR · <a href="https://huggingface.co/datasets/finebooks/bhl-impact-gt">IMPACT-BHL ground truth</a></div>
     <h1>BHL OCR Leaderboard</h1>
     <p class="lede">How well OCR and <span class="gloss" data-tip="AI models that look at the page image and write out the text — the same family as chat models — rather than matching letter shapes like classical OCR.">vision-language models</span> transcribe 18th–19th-century book pages — a
       broken-out scorecard, not a single grade. Ranked on micro-averaged <span class="gloss" data-tip="Of every 100 characters in the correct text, how many the model got wrong. Lower is better: .024 means about 2 or 3 slips per 100 characters.">character error rate</span>, read as
@@ -251,7 +254,7 @@
       same bar.</li>
       <li><b>Docs & data:</b> <a href="https://github.com/finebooks/bhl-ocr-eval">bhl-ocr-eval</a> —
       methodology in DESIGN.md, plain-language guide in GLOSSARY.md, findings and caveats in RESULTS.md.
-      Ground truth: <a href="https://huggingface.co/datasets/finebooks/bhl-eval-impact">finebooks/bhl-eval-impact</a>
+      Ground truth: <a href="https://huggingface.co/datasets/finebooks/bhl-impact-gt">finebooks/bhl-impact-gt</a>
       (IMPACT Centre of Competence / BHL-Europe, CC-BY).</li>
     </ul>
   </div>

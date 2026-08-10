@@ -9,7 +9,7 @@ read each number; [DESIGN.md](DESIGN.md) explains why the numbers are built this
 ## One board
 
 **2,165 pages, 14 models.** Every page of the IMPACT-BHL ground truth
-(via [`finebooks/bhl-eval-impact`](https://huggingface.co/datasets/finebooks/bhl-eval-impact)),
+(via [`finebooks/bhl-impact-gt`](https://huggingface.co/datasets/finebooks/bhl-impact-gt)),
 including 428 sparse/blank pages (plates, blanks, near-empty pages), scored for every model on the
 board. We ran 16 models; two are held back — see *What counts as a score*, below.
 
@@ -123,4 +123,4 @@ plus a pinned ground-truth revision, so any score can be reproduced without re-r
 one scoring pass (`runners/score_dataset.py`) → one report (`runners/leaderboard.py`), written
 into the board page by `scripts/bake_leaderboard.py`. The ground truth is the IMPACT-BHL expert
 transcription set, CC-BY, credited to the IMPACT Centre of Competence / BHL-Europe — see the
-source dataset [`finebooks/bhl-eval-impact`](https://huggingface.co/datasets/finebooks/bhl-eval-impact).
+source dataset [`finebooks/bhl-impact-gt`](https://huggingface.co/datasets/finebooks/bhl-impact-gt).

@@ -1,7 +1,7 @@
 # Design notes — BHL OCR evaluation harness
 
 Why the harness is built the way it is, and the trade-offs behind the numbers. The dataset card
-(`finebooks/bhl-eval-impact`) documents the ground truth; this documents the **scorer**.
+(`finebooks/bhl-impact-gt`) documents the ground truth; this documents the **scorer**.
 
 ## What this is
 
