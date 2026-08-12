@@ -179,6 +179,10 @@ def main():
             ]}],
             "temperature": SERVING["temperature"],
             "max_tokens": args.max_tokens,
+            # DocTags (<doctag>, <loc_*>) are added special tokens; the card decodes with
+            # skip_special_tokens=False. vLLM's chat API defaults to True, which strips them
+            # and hands docling-core streams it silently converts to empty/partial markdown.
+            "skip_special_tokens": False,
         }
 
     def parse(row, body):

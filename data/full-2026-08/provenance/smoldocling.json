@@ -23,51 +23,20 @@
     ],
     "max_tokens": 6144,
     "temperature": 0.0,
-    "max_pixels_longest_edge": 2048
+    "max_pixels_longest_edge": 2048,
+    "skip_special_tokens": false
   },
   "postproc_version": "3",
   "norm_version": "2026-07-20a",
   "scorer_version": "3.0",
   "job": {
-    "id": "6a710f01a00abefd4b2904ca",
-    "created_at": "2026-08-03 21:58:25.024000+00:00",
-    "started_at": "2026-08-03 22:03:32.898000+00:00",
-    "finished_at": "2026-08-03 22:22:32.934000+00:00",
+    "id": "6a7c745c8747785b3ad50a13",
+    "created_at": "2026-08-12 13:25:48.372000+00:00",
     "docker_image": "vllm/vllm-openai:v0.26.0",
-    "space_id": null,
-    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
-    "command": [
-      "uv",
-      "run",
-      "/data/smoldocling-port.py",
-      "--input-dataset",
-      "davanstrien/bhl-eval-impact-full-2165-v1",
-      "--revision",
-      "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
-      "--image-column",
-      "image",
-      "--id-column",
-      "PageID",
-      "--model-revision",
-      "ce51f56c4ebe36e0b1c3a55f67b261ba22a50bf8",
-      "--output",
-      "hf://buckets/davanstrien/bhl-ocr-runs/full-2026-08/smoldocling/"
-    ],
-    "arguments": [],
-    "environment": {},
-    "secrets": [
-      "HF_TOKEN"
-    ],
     "flavor": "a10g-small",
-    "labels": {},
-    "volumes": [
-      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260803T215822-ce075f')"
-    ],
-    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
-    "durations": "JobDurations(scheduling_secs=307, running_secs=1140, total_secs=1447)",
-    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
-    "endpoint": "https://huggingface.co",
-    "url": "https://huggingface.co/jobs/davanstrien/6a710f01a00abefd4b2904ca"
+    "url": "https://huggingface.co/jobs/davanstrien/6a7c745c8747785b3ad50a13",
+    "output": "hf://buckets/davanstrien/bhl-ocr-runs/diag-2026-08-12-skiptok/smoldocling/",
+    "supersedes": "6a710f01a00abefd4b2904ca"
   },
   "outputs": {
     "consolidated": "data/full-2026-08/consolidated/smoldocling.parquet",
