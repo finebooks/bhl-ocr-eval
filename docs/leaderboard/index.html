@@ -351,6 +351,17 @@ function scatter(){
     if(fit)labels+=`<text class="ptlbl" x="${(x+fit.dx).toFixed(1)}" y="${(y+fit.dy).toFixed(1)}" text-anchor="${fit.anchor}">${d.name}</text>`;
   });
   s+=labels;
+  /* Best-corner cue: a soft wash fading out of the upper-left plus a two-armed arrow naming
+     each axis direction (up = more accurate, left = smaller). The wash has no edge anywhere,
+     so it cues direction without asserting a threshold — CI overlap stays the grouping story.
+     Everything is fixed pixel offsets from the plot corner, never data-anchored, so no roster
+     change can put a point underneath it; pointer-events off so it can't swallow hover. */
+  s=`<defs><radialGradient id="bwash" cx="0" cy="0" r="0.85"><stop offset="0" stop-color="var(--accent)" stop-opacity=".2"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></radialGradient><marker id="barw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>`
+   +`<rect x="${mL}" y="${mT}" width="${iw}" height="${ih}" fill="url(#bwash)" pointer-events="none"/>`+s;
+  {const ox=mL+114, oy=mT+102, topy=mT+26, lx=mL+20;
+  s+=`<path d="M${ox},${topy} L${ox},${oy} L${lx},${oy}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-opacity=".9" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#barw)" marker-end="url(#barw)" pointer-events="none"/>`;
+  s+=`<text class="ptlbl" x="${ox-10}" y="${topy+9}" text-anchor="end">more accurate</text>`;
+  s+=`<text class="ptlbl" x="${(ox+lx)/2}" y="${oy+17}" text-anchor="middle">smaller</text>`;}
   document.getElementById("scatter").innerHTML=s;
   document.getElementById("legend").innerHTML=Object.entries(CATCOL)
     .map(([k,c])=>`<span><i class="dot" style="background:${c}"></i>${k}</span>`).join("")
