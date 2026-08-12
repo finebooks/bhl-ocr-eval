@@ -222,7 +222,7 @@
     with runaway hallucination on near-empty pages, and the aggregate CER shows it.</p>
 
   <div class="sec"><h2>Size vs. accuracy</h2>
-    <span class="hint" id="scatterHint">params (log) vs CER · lower-left is better</span></div>
+    <span class="hint" id="scatterHint">params (log) vs CER · upper-left is better</span></div>
   <div class="chartcard">
     <div class="legend" id="legend"></div>
     <svg id="scatter" viewBox="0 0 720 400" role="img" aria-label="Parameters versus character error rate"></svg>
@@ -306,7 +306,7 @@ function scatter(){
   const notes=[noParams?`${noParams} classical engine${noParams>1?"s":""} (no parameter count)`:null,
                offScale.length?`${offScale.join(", ")} off-scale above CER ${pf(CER_CUTOFF)}`:null].filter(Boolean);
   document.getElementById("scatterHint").textContent=
-    "params (log) vs CER · lower-left is better"+(notes.length?" · "+notes.join(" · "):"");
+    "params (log) vs CER · upper-left is better"+(notes.length?" · "+notes.join(" · "):"");
   // x: snap out to the enclosing round tick either side. y: round up to the next 0.05.
   const ps=pts.map(d=>d.params);
   const lo=[...PTICKS].reverse().find(t=>t<=Math.min(...ps)) ?? Math.min(...ps);
