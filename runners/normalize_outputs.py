@@ -395,6 +395,24 @@ def smoldocling_doctags_to_markdown(text: str, image=None) -> str:
     return doctags_to_markdown(text, image)
 
 
+def falcon_strip_unused_tokens(text: str) -> str:
+    """Drop leaked `>>UNUSED_N<<` vocab tokens (tiiuae/Falcon-OCR).
+
+    The vendor pipeline occasionally emits raw unused-vocabulary tokens instead of text —
+    on the full-2165 run, 76 pages carried `>>UNUSED_261<<` (71 of them genuinely blank
+    pages whose only "text" was the token). That is markup leakage, not transcription, so
+    it is stripped like OvisOCR2's bbox placeholders. Effect on the aggregate is tiny
+    (0.1428 -> 0.1425): the model emits OTHER junk on most blank pages too, and that
+    stays — it is real model output. Reported upstream to TII.
+
+    Registered without a POSTPROC_VERSION bump, deliberately: no existing transform
+    changed, and the leaderboard refuses mixed stamps — a bump would force a no-op
+    re-normalize of every cached run. A NEW model's first rules are part of the
+    version it is born under.
+    """
+    return re.sub(r">>UNUSED_\d+<<", "", text)
+
+
 # Transforms that take the page image as a second argument. Everything else is `(str) -> str`.
 IMAGE_AWARE = {"smoldocling_doctags_to_markdown"}
 
@@ -409,6 +427,10 @@ REGISTRY = {
                                 require_non_empty),
     # deepseek-ocr2-port.py — the twin driver, minus the empty-output raise (see require_non_empty).
     "deepseek-ai/DeepSeek-OCR-2": (strip_outer_whitespace, deepseek_strip_grounding),
+    # falcon-ocr-port.py — vendor pipeline endpoint returns assembled markdown; strips leaked
+    # unused-vocab tokens (see falcon_strip_unused_tokens). No empty-output raise: the pipeline
+    # answers every page, and a blank page answered with junk must SCORE as junk.
+    "tiiuae/Falcon-OCR": (strip_outer_whitespace, falcon_strip_unused_tokens),
     # dots-mocr-port.py — raises on empty; the recipe's "[OCR ERROR]" sentinel strings are gone.
     "rednote-hilab/dots.mocr": (strip_outer_whitespace, require_non_empty),
     # dots-ocr-port.py — the 1.7B sibling; strip only, no empty-output raise.
