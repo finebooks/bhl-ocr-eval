@@ -1,0 +1,35 @@
+{
+  "producer": "bhl-ocr-eval drivers/falcon-ocr-port.py (vendor pipeline endpoint) on HF Jobs",
+  "run_id": "falcon-ocr-2026-08-12",
+  "script": "drivers/falcon-ocr-port.py",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "model": "tiiuae/Falcon-OCR",
+  "model_revision": "ghcr.io/tiiuae/falcon-ocr@sha256:2ec8025263fbdbfa2523e4fda4b436ca832a7b4b2c8f7eead311634689e4cd4b (weights ship inside the image; the digest is the revision pin)",
+  "prompt": null,
+  "settings": {
+    "serving": "vendor image entrypoint_single.sh \u2014 vLLM :8000 + layout pipeline :5002 on one a10g-small",
+    "endpoint": "/falconocr/parse",
+    "skip_layout": false,
+    "max_pixels_longest_edge": 2048
+  },
+  "notes": [
+    "Pipeline API exposes no finish_reason: no truncation sentinels, loop% reads 0.00 by construction (like tesseract-5).",
+    "~25 'RuntimeError: Already borrowed' tokenizer errors per shard were absorbed inside the vendor pipeline (pages still returned; content recall 0.956 suggests negligible text loss).",
+    "165 pages/shard took the pipeline's own no-layout-regions -> full-page-OCR fallback (expected on the sparse/blank stratum)."
+  ],
+  "job": {
+    "ids": [
+      "6a7c8c9b8747785b3ad50c38",
+      "6a7c8c9b73ce7897b89372ca"
+    ],
+    "shards": "0-1/2",
+    "docker_image": "ghcr.io/tiiuae/falcon-ocr@sha256:2ec8025263fbdbfa2523e4fda4b436ca832a7b4b2c8f7eead311634689e4cd4b",
+    "flavor": "a10g-small",
+    "created_at": "2026-08-12 15:09/15:12 UTC",
+    "output": "hf://buckets/davanstrien/bhl-ocr-runs/falcon-ocr-2026-08-12/full/"
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0"
+}

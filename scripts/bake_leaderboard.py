@@ -52,6 +52,7 @@ META = {
     "lightonai/LightOnOCR-2-1B": (1.006, "specialist", "LightOnOCR-2"),
     "allenai/olmOCR-2-7B-1025-FP8": (8.294, "specialist", "olmOCR-2"),
     "ds4sd/SmolDocling-256M-preview": (0.256, "specialist", "SmolDocling"),
+    "tiiuae/Falcon-OCR": (0.3, "specialist", "Falcon-OCR"),
     "PaddlePaddle/PaddleOCR-VL-1.6": (0.959, "specialist", "PaddleOCR-VL-1.6"),
     "PaddlePaddle/PP-OCRv6_medium": (None, "classical", "PP-OCRv6"),
     "tesseract-5": (None, "classical", "Tesseract 5"),

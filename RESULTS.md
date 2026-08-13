@@ -36,6 +36,7 @@ which excludes the page from that row's aggregates and is counted in the Loop % 
 | 12 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
 | 13 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
 | 14 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
+| 15 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
 
 Where 95% CIs overlap, read the models as tied — the top two are statistically identical, and most
 mid-table neighbours overlap. Loop % carries a selection bias: looped pages are excluded from that
