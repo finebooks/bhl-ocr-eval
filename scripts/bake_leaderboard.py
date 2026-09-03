@@ -56,6 +56,18 @@ META = {
     "PaddlePaddle/PaddleOCR-VL-1.6": (0.959, "specialist", "PaddleOCR-VL-1.6"),
     "PaddlePaddle/PP-OCRv6_medium": (None, "classical", "PP-OCRv6"),
     "tesseract-5": (None, "classical", "Tesseract 5"),
+    # kraken's PP-OCRv6, which is NOT PaddlePaddle's despite the shared architecture name — the
+    # entry above is Baidu's own detection+recognition pair, this one is Benjamin Kiessling's
+    # from-scratch retrain on historical ATR corpora for kraken. Both are on the board on
+    # purpose; the display names have to keep them apart for a reader who only sees the column.
+    #
+    # 0.0159B is the RECOGNISER, summed from the safetensors header the same way as every other
+    # row (15,920,372 parameters). It excludes kraken's bundled blla segmenter, which ships
+    # inside the package, publishes no parameter count, and is not something a user picks — so
+    # the row is a pipeline like Tesseract and PP-OCRv6, hence the PIPELINES entry below.
+    # Type "classical": the board's vocabulary is {VLM, specialist, classical} and a CTC line
+    # recogniser behind a layout segmenter is Tesseract's shape, not a generative page model's.
+    "kraken/PP-OCRv6-medium": (0.0159, "classical", "kraken PP-OCRv6"),
     # Added 2026-08-04 for the full-2026-08 run, measured the same way. Note
     # Unlimited-OCR is 3.336B — byte-identical to DeepSeek-OCR's count, and it ships
     # DeepSeek's NGram anti-repetition processor pattern too, so treat the two as
@@ -88,6 +100,13 @@ PIPELINES = {
         "rec": "PaddlePaddle/PP-OCRv6_medium_rec",
     },
     "tesseract-5": {"engine": "tesseract 5 — CPU binary, no Hub repo"},
+    # Published on Zenodo, not the Hub, so the recogniser is named by DOI rather than repo id —
+    # and the segmenter has no publication of its own at all, because it ships inside the kraken
+    # package and is versioned by the kraken commit the run pinned.
+    "kraken/PP-OCRv6-medium": {
+        "seg": "kraken blla — bundled with kraken, pinned by the kraken commit",
+        "rec": "doi:10.5281/zenodo.21788410 — PP-OCRv6 medium",
+    },
 }
 
 

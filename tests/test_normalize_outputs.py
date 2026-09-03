@@ -236,11 +236,25 @@ def test_registry_covers_the_markdown_producing_drivers():
         "deepseek-ai/DeepSeek-OCR", "deepseek-ai/DeepSeek-OCR-2", "tiiuae/Falcon-OCR",
         "rednote-hilab/dots.mocr",
         "rednote-hilab/dots.ocr", "google/gemma-4-12B-it", "zai-org/GLM-OCR",
-        "tencent/HunyuanOCR", "lightonai/LightOnOCR-2-1B", "numind/NuExtract3",
+        "tencent/HunyuanOCR", "kraken/PP-OCRv6-medium", "lightonai/LightOnOCR-2-1B",
+        "numind/NuExtract3",
         "allenai/olmOCR-2-7B-1025-FP8",
         "ATH-MaaS/OvisOCR2", "PaddlePaddle/PaddleOCR-VL-1.6", "baidu/Qianfan-OCR",
         "Qwen/Qwen3.5-9B", "ds4sd/SmolDocling-256M-preview", "baidu/Unlimited-OCR",
     }
+
+
+def test_kraken_passes_an_empty_page_through_instead_of_raising():
+    # The board's sparse/blank stratum is why this row exists: a line recogniser given a blank
+    # leaf finds no line and correctly transcribes nothing. If require_non_empty ever gets added
+    # here, every blank page becomes an error row and fail-closed scoring drops the whole model
+    # off the ranking — so the absence is asserted, not just commented.
+    chain = NO.REGISTRY["kraken/PP-OCRv6-medium"]
+    assert NO.require_non_empty not in chain
+    text = "   \n"
+    for fn in chain:
+        text = fn(text)
+    assert text == ""
 
 
 def test_sibling_drivers_keep_their_differing_empty_output_rules():
