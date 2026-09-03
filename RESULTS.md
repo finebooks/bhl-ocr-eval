@@ -77,8 +77,9 @@ transcribes each one. It ranks 4th on the headline, with a confidence interval o
 
 **It wins the diplomatic lane outright.** CER diplomatic 0.0405, against 0.0503 for the next best
 (dots.mocr) and 0.0560 for the model that leads the reading lane. The two lanes differ in whether
-long-s, ligatures and case are folded before scoring, so the ratio between them measures how much
-of a model's headline score depends on that folding. kraken's is 1.20x; dots.ocr's is 2.38x. The
+long-s, ligatures and case are folded before scoring, so diplomatic divided by reading measures
+how much of a model's headline score depends on that folding. kraken's is 1.20x (0.0405/0.0338);
+dots.ocr's is 2.38x (0.0560/0.0235) — more than half of its reading-lane score is the fold. The
 generative models partly win the reading lane by modernising orthography as they read, and on a
 board about historical print the diplomatic column is the one that says who transcribed the page
 in front of them.

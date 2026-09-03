@@ -2,7 +2,7 @@
   "producer": "bhl-ocr-eval drivers/kraken-ppocrv6-port.py in-process (no saturate pump) on HF Jobs",
   "run_id": "kraken-ppocrv6-2026-09",
   "script": "drivers/kraken-ppocrv6-port.py",
-  "script_commit": "8a7c5cbe8b4a2f42cdb61f5e3509af89e3ee2845 (feat/kraken-ppocrv6-row) \u2014 tree 7a801ddda334bb5a6377908ba30142c776a3eaad, the checkout the four shard jobs were uploaded from. Later commits on the branch touch only docstrings; the driver's AST is unchanged from this commit.",
+  "script_commit": "8a7c5cbe8b4a2f42cdb61f5e3509af89e3ee2845 (feat/kraken-ppocrv6-row) \u2014 tree 7a801ddda334bb5a6377908ba30142c776a3eaad, the checkout the four shard jobs were uploaded from. Later commits on the branch change docstrings and one thing more: next_part_index() replaced a count of this rank's existing part files with max-index-plus-one, because a hole in the sequence made a count name a file that already existed. That path did not execute in this run \u2014 all four shards report pages_skipped_resume: 0, so no resume occurred and no part index was derived from existing files. Every other difference from this commit is docstring text; the driver's AST is otherwise unchanged.",
   "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
   "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
   "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",

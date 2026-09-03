@@ -84,6 +84,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -232,11 +233,14 @@ def load_stack(weights: Path, accelerator: str, batch_size: int):
 def transcribe(image, seg_model, rec_model, seg_config, rec_config):
     """One page image -> (text, diagnostics).
 
-    Both stages are timed and both line counts are kept. `n_lines` is what the segmenter found,
-    `n_records` is what the recogniser returned; kraken drops a line it cannot polygonise (it
-    logs "Polygonizer failed") rather than failing the page, so a gap between the two is a
-    silently dropped line. That gap is the single most useful diagnostic this row can carry, and
-    it is invisible from the text alone.
+    Both stages are timed and both line counts are kept. `n_lines` is what the segmenter
+    RETURNED, `n_records` is what the recogniser produced from it.
+
+    A gap between the two does NOT report polygonisation drops — see the module docstring. Those
+    lines are discarded before `Segmentation.lines` exists, so they are already missing from
+    `n_lines`, and the two counts agree while the page is short a line. The pair still earns its
+    place: it says how much of a page reached the recogniser at all, which separates "the
+    segmenter found nothing here" from "the recogniser read it badly" when a page scores poorly.
     """
     t0 = time.time()
     segmentation = seg_model.predict(im=image, config=seg_config)
@@ -316,6 +320,20 @@ def write_part(rows, output: str, rank: int, index: int) -> str:
     return path
 
 
+def next_part_index(existing_parts, rank: int) -> int:
+    """One past the highest part index this rank has already written.
+
+    Never a count: a hole in the sequence (a part deleted, or a partial upload cleaned up by
+    hand) would make a count point at a filename that already exists, and writing it would
+    destroy pages that `done_ids()` has already marked done — silent loss rather than a loud
+    failure. Max-plus-one only ever moves forward, so a resume can add parts but never replace
+    one. Filenames that do not parse are ignored rather than guessed at.
+    """
+    pattern = re.compile(rf"part-r{rank:02d}-(\d+)\.parquet$")
+    indices = [int(m.group(1)) for p in existing_parts if (m := pattern.search(str(p)))]
+    return max(indices) + 1 if indices else 0
+
+
 def parse_shard(spec: str) -> tuple[int, int]:
     """`RANK/WORLD` -> (rank, world), matching drivers/falcon-ocr-port.py."""
     rank, _, world = spec.partition("/")
@@ -390,11 +408,14 @@ def main():
         dataset = dataset.select(range(min(args.limit, len(dataset))))
 
     already = done_ids(args.output)
-    # Resume numbering from THIS rank's own parts. Counting every part in the prefix would make a
-    # restarted shard collide with a sibling's filenames; counting none would make it overwrite
-    # its own earlier flushes.
+    # Resume numbering from THIS rank's own parts, by the HIGHEST index present rather than by
+    # how many there are. Counting is wrong the moment the sequence has a hole: with
+    # part-r00-00000 and part-r00-00002 on disk, a count says "2" and the next flush overwrites
+    # part-r00-00002 — whose ids done_ids() has already loaded, so those pages are skipped as
+    # done and vanish from the prefix. Counting every part in the prefix regardless of rank
+    # would be worse still, colliding with a sibling shard's filenames.
     existing_parts, _ = part_paths(args.output)
-    part_index = sum(1 for p in existing_parts if f"part-r{rank:02d}-" in p)
+    part_index = next_part_index(existing_parts, rank)
 
     rows, written, errors, empties = [], 0, 0, 0
     total = len(dataset)
