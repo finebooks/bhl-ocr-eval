@@ -30,7 +30,17 @@ RECOGNISER transcribes each one. Two consequences the board has to state rather 
 
   1. A score here is attributable to the PAIR, not to the recogniser alone. If segmentation
      misses lines, the recogniser wears the recall loss. `n_lines` and `n_records` are recorded
-     per page so the two stages can be told apart after the fact.
+     per page to show how much of a page reached the recogniser at all.
+
+     They do NOT detect every dropped line, and it is worth being precise about why. When
+     polygonisation fails, `calculate_polygonal_environment` returns None and the caller simply
+     does not build a line (kraken/lib/vgsl/spred.py:141-147) — so the line never enters
+     `Segmentation.lines`, `n_lines` already excludes it, and the two counts agree. Those drops
+     are silent recall loss and the only record of them is a "Polygonizer failed" WARNING in the
+     job log. Count those warnings; the count, not the line number, is the information (kraken
+     polygonises one baseline at a time, so the message always says "line 0"). A future run
+     wanting this as a column should either count those log records or pass
+     `raise_on_error=True` on the segmentation config, which converts the drops into exceptions.
   2. The segmenter is not a choice we made. `SegmentationTaskModel.load_model()` with no path
      loads `blla.mlmodel` from inside the kraken package, so the segmenter's identity is pinned
      by the kraken commit and is exactly what a user gets out of the box. Same policy as the
@@ -52,6 +62,11 @@ that are still on the host, so a GPU run dies rather than falling back. Upstream
 PR #799 (`0a3218f0`, merged 2026-08-15) and there has been no 7.1.1 since, so the pin is the
 main commit that carries the fix. `SERVING["kraken_release"]` records this rather than letting
 the row claim a plain "kraken 7.1" a reader could not reproduce.
+
+The gap between the 7.1 tag (`eff0571`) and the pinned commit was read rather than assumed: it
+is three files — that crash fix, one docs example, and an `htrmopo>=0.5` -> `>=0.6` requirement
+bump. Nothing in it changes what the models compute. So this row is 7.1's numerics with the fix
+that makes GPU inference possible, not a moving target checked out of main.
 
 THE CHECKPOINTS ARE ON ZENODO, NOT THE HUB
 
