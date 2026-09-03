@@ -444,6 +444,23 @@ REGISTRY = {
     "zai-org/GLM-OCR": (strip_outer_whitespace, require_non_empty),
     # hunyuan-ocr-15-port.py — the card's official repetition-loop trimmer.
     "tencent/HunyuanOCR": (strip_outer_whitespace, clean_repeated_substrings),
+    # kraken-ppocrv6-port.py — strip only, and deliberately nothing else. A CTC line recogniser
+    # emits no markup, no fence and no grounding syntax; the driver has already joined the
+    # recognised lines with newlines, exactly as kraken's own text serialisation does.
+    #
+    # NO require_non_empty, and that omission is load-bearing. This row's reason for existing is
+    # the model card's claim that the family works "without hallucinations", and the board's
+    # sparse/blank stratum is how that gets tested: on a blank leaf the segmenter finds no line
+    # and the correct transcription is the empty string. Raising there would convert this
+    # model's best-behaved pages into error rows and, under fail-closed scoring, make the whole
+    # row ineligible. Compare zai-org/GLM-OCR, where an empty completion IS a failure because a
+    # generative model returning nothing has not read the page. Same empty string, opposite
+    # meaning; see require_non_empty's docstring for the general rule.
+    #
+    # Registered without a POSTPROC_VERSION bump, following tiiuae/Falcon-OCR: no existing
+    # transform changed, and the leaderboard refuses mixed stamps, so a bump would force a
+    # no-op re-normalize of every cached run.
+    "kraken/PP-OCRv6-medium": (strip_outer_whitespace,),
     # lighton-ocr2-port.py — strip only. Both sources agree and neither does anything else: the
     # upstream saturate driver's `parse` stored `content.strip()`, the offline recipe stored
     # `output.outputs[0].text.strip()`, and the model card gives no post-processing guidance at
