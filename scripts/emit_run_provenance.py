@@ -36,9 +36,15 @@ import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# Rows whose producer is not a saturate driver. They have no SERVING dict, so their
-# provenance is assembled from the job record alone and says so explicitly.
-NON_SATURATE = {"tesseract": "tesseract-port.py"}
+# Rows whose producer is not a saturate driver: the model runs in-process rather than behind an
+# HTTP endpoint a pump can drive. The value is the driver filename, for the rows where it is not
+# simply `<slug>-port.py`.
+#
+# Membership also decides how the `producer` line reads. That line used to say "via saturate" for
+# every row including tesseract, which was untrue and exactly the kind of quiet drift between the
+# record and the run that this script exists to prevent — the whole file is generated so that no
+# claim in it can be a typo. A row here is described as in-process instead.
+NON_SATURATE = {"tesseract": "tesseract-port.py", "kraken-ppocrv6": "kraken-ppocrv6-port.py"}
 
 
 def literal_from_module(path: pathlib.Path, name: str):
@@ -92,8 +98,9 @@ def build(slug, model, job_id, model_revision, plan, revisions):
     prompt = literal_from_module(driver, "PROMPT") if driver.exists() else None
     prompts = literal_from_module(driver, "PROMPTS") if driver.exists() else None
 
+    mechanism = "in-process (no saturate pump)" if slug in NON_SATURATE else "via saturate"
     record = {
-        "producer": f"bhl-ocr-eval drivers/{driver_name} via saturate on HF Jobs",
+        "producer": f"bhl-ocr-eval drivers/{driver_name} {mechanism} on HF Jobs",
         "run_id": plan["run_id"],
         "script": f"drivers/{driver_name}",
         "script_commit": plan["driver_revision"],
@@ -139,7 +146,10 @@ def main():
     slug_to_model = {j["driver"].replace("-port.py", "").replace(".py", ""): j["model"]
                      for j in plan["jobs"]}
 
-    out_dir = pathlib.Path(args.out)
+    # Resolved, because the summary lines below print paths relative to ROOT and `relative_to`
+    # raises on a relative argument — passing `--out data/…` used to crash AFTER writing every
+    # file, which looks like a failed run and is not one.
+    out_dir = pathlib.Path(args.out).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for line in pathlib.Path(args.job_map).read_text().splitlines():

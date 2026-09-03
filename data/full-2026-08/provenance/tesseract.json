@@ -1,5 +1,5 @@
 {
-  "producer": "bhl-ocr-eval drivers/tesseract-port.py via saturate on HF Jobs",
+  "producer": "bhl-ocr-eval drivers/tesseract-port.py in-process (no saturate pump) on HF Jobs",
   "run_id": "full-2026-08",
   "script": "drivers/tesseract-port.py",
   "script_commit": "afa08c85 (main, squash-merge of PR #39) \u2014 tree 14dcb9746cfbf719a29246d38333b95f1bb25632, byte-identical to the local 61e57fd checkout the jobs were uploaded from",
