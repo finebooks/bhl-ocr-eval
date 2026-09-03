@@ -295,7 +295,10 @@ document.getElementById("tiles").innerHTML=[
    corner. It is the one editorial choice here; both axis ranges are derived from the data, so a
    roster change can never leave the chart claiming a scale it no longer has. */
 const CER_CUTOFF=0.30;
-const PTICKS=[0.1,0.25,0.5,1,2,5,10,20,50,100,200,500];
+// Down to 0.01B because the board now carries a 15.9M-parameter line recogniser. When the
+// smallest model sits below every tick, `lo` falls through to its own value, the point is
+// drawn exactly on the axis line, and the space left of the first tick carries no labels.
+const PTICKS=[0.01,0.025,0.05,0.1,0.25,0.5,1,2,5,10,20,50,100,200,500];
 function scatter(){
   const W=720,H=400,mL=52,mR=18,mT=16,mB=42, iw=W-mL-mR, ih=H-mT-mB;
   const pts=DATA.filter(d=>d.params && d.cer_read<=CER_CUTOFF);   // neural, on-scale
@@ -390,7 +393,7 @@ function render(){
   let html="";
   rows.forEach(d=>{
     const pol=policy(d.furn);
-    const pbar=d.params?`<div class="bar"><i style="width:${Math.max(3,Math.log10(d.params/0.2)/Math.log10(120/0.2)*100).toFixed(0)}%"></i></div>`:"";
+    const pbar=d.params?`<div class="bar"><i style="width:${Math.max(3,Math.log10(d.params/0.01)/Math.log10(120/0.01)*100).toFixed(0)}%"></i></div>`:"";
     const cbar=`<div class="bar"><i style="width:${Math.min(100,d.cer_read/0.30*100).toFixed(0)}%;background:color-mix(in oklab,var(--class) ${Math.min(90,d.cer_read/0.30*100).toFixed(0)}%,var(--spec))"></i></div>`;
     const nameCell=d.repo
       ?`<a class="mdl" href="https://huggingface.co/${d.repo}">${d.name}</a>`

@@ -53,3 +53,35 @@ def test_other_ranks_do_not_move_this_rank_forward():
 def test_unparseable_names_are_ignored_not_guessed_at():
     parts = ["run/part-r00-00000.parquet", "run/part-r00-notanumber.parquet", "run/notes.txt"]
     assert KP.next_part_index(parts, rank=0) == 1
+
+
+def test_hf_uri_listings_parse_the_same_as_local_paths():
+    # In production `part_paths()` returns HfFileSystem glob results, not local paths. The `$`
+    # anchor means only the basename can match, so a bucket prefix containing "part-r00-" — or a
+    # run directory named after a shard — cannot be mistaken for a part file.
+    parts = [
+        "buckets/davanstrien/bhl-ocr-runs/kraken-ppocrv6-2026-09/medium/part-r00-00000.parquet",
+        "buckets/davanstrien/bhl-ocr-runs/part-r00-99999/medium/part-r00-00001.parquet",
+    ]
+    assert KP.next_part_index(parts, rank=0) == 2
+
+
+def test_rank_beyond_two_digits_still_matches_its_own_parts():
+    # The filename uses {rank:02d}, which does not truncate: rank 100 writes "part-r100-". The
+    # parser builds its pattern the same way, so the two stay in step above 99 shards.
+    parts = ["run/part-r100-00000.parquet", "run/part-r10-00007.parquet"]
+    assert KP.next_part_index(parts, rank=100) == 1
+    assert KP.next_part_index(parts, rank=10) == 8
+
+
+def test_main_actually_uses_the_helper():
+    # The helper being correct is worth nothing if main() computes the index itself — which is
+    # exactly the bug this file exists for. Checked at the source level because main() cannot be
+    # called without a GPU, a benchmark dataset and a writable bucket.
+    import ast
+
+    tree = ast.parse(_DRIVER.read_text())
+    main = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    called = {n.func.id for n in ast.walk(main)
+              if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    assert "next_part_index" in called
