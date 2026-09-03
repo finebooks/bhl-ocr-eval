@@ -13,6 +13,10 @@ import pathlib
 
 _DRIVER = pathlib.Path(__file__).resolve().parent.parent / "drivers" / "kraken-ppocrv6-port.py"
 _spec = importlib.util.spec_from_file_location("kraken_ppocrv6_port", _DRIVER)
+# Both are Optional in the stdlib signatures, and a None here would mean the driver was renamed
+# or moved — in which case these tests should say so plainly rather than fail later with an
+# AttributeError on None.
+assert _spec is not None and _spec.loader is not None, f"cannot load driver at {_DRIVER}"
 KP = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(KP)
 
