@@ -1,0 +1,214 @@
+{
+  "producer": "bhl-ocr-eval drivers/kraken-ppocrv6-port.py in-process (no saturate pump) on HF Jobs",
+  "run_id": "kraken-ppocrv6-2026-09",
+  "script": "drivers/kraken-ppocrv6-port.py",
+  "script_commit": "8a7c5cbe8b4a2f42cdb61f5e3509af89e3ee2845 (feat/kraken-ppocrv6-row) \u2014 tree 7a801ddda334bb5a6377908ba30142c776a3eaad, the checkout the four shard jobs were uploaded from. Later commits on the branch touch only docstrings; the driver's AST is unchanged from this commit.",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "kraken/PP-OCRv6-medium",
+  "model_revision": "doi:10.5281/zenodo.21788410 sha256:15313b51ace64cbfa81f8f6ef25ad64f04e5a6fb7f7823e67b107527bc081ac9",
+  "prompt": null,
+  "settings": {
+    "model": "kraken/PP-OCRv6-medium",
+    "recognition_doi": "10.5281/zenodo.21788410",
+    "recognition_weights": "https://zenodo.org/records/21788410/files/medium.safetensors",
+    "recognition_sha256": "15313b51ace64cbfa81f8f6ef25ad64f04e5a6fb7f7823e67b107527bc081ac9",
+    "recognition_variant": "medium",
+    "recognition_params": 15920372,
+    "segmentation_model": "kraken bundled blla.mlmodel (SegmentationTaskModel.load_model(), no path)",
+    "kraken": "git+https://github.com/mittagessen/kraken@3e6893a0d5eb06273494bfcdb9d3cac6159e0611",
+    "kraken_release": "7.1 plus upstream commits to 2026-08-21, incl. PR #799 (GPU tensor placement)",
+    "batch_size": 32,
+    "precision": "32-true",
+    "padding": 16,
+    "num_line_workers": 0,
+    "text_direction": "horizontal-lr",
+    "reading_order": "polygonal_reading_order (kraken default)",
+    "bidi_reordering": true,
+    "line_join": "\n"
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "ids": [
+      "6a993b8121c5aa7c8364fcd9",
+      "6a993b840718b0f6d891409e",
+      "6a993b8721c5aa7c8364fcdb",
+      "6a993b8a0718b0f6d89140a6"
+    ],
+    "records": [
+      {
+        "id": "6a993b8121c5aa7c8364fcd9",
+        "created_at": "2026-09-03 09:18:57.111000+00:00",
+        "started_at": "2026-09-03 09:19:05.998000+00:00",
+        "finished_at": "2026-09-03 11:19:17.903000+00:00",
+        "docker_image": "ghcr.io/astral-sh/uv:python3.12-bookworm",
+        "space_id": null,
+        "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+        "command": [
+          "uv",
+          "run",
+          "/data/kraken-ppocrv6-port.py",
+          "--input-dataset",
+          "davanstrien/bhl-eval-impact-full-2165-v1",
+          "--revision",
+          "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+          "--id-column",
+          "PageID",
+          "--shard",
+          "0/4",
+          "--output",
+          "hf://buckets/davanstrien/bhl-ocr-runs/kraken-ppocrv6-2026-09/medium/"
+        ],
+        "arguments": [],
+        "environment": {},
+        "secrets": [
+          "HF_TOKEN"
+        ],
+        "flavor": "a10g-small",
+        "labels": {
+          "name": "kraken-ppocrv6-full-r0"
+        },
+        "volumes": [
+          "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260903T091852-6efabe')"
+        ],
+        "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+        "durations": "JobDurations(scheduling_secs=8, running_secs=7211, total_secs=7220)",
+        "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+        "endpoint": "https://huggingface.co",
+        "url": "https://huggingface.co/jobs/davanstrien/6a993b8121c5aa7c8364fcd9"
+      },
+      {
+        "id": "6a993b840718b0f6d891409e",
+        "created_at": "2026-09-03 09:19:00.317000+00:00",
+        "started_at": "2026-09-03 09:19:08.606000+00:00",
+        "finished_at": "2026-09-03 11:12:01.784000+00:00",
+        "docker_image": "ghcr.io/astral-sh/uv:python3.12-bookworm",
+        "space_id": null,
+        "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+        "command": [
+          "uv",
+          "run",
+          "/data/kraken-ppocrv6-port.py",
+          "--input-dataset",
+          "davanstrien/bhl-eval-impact-full-2165-v1",
+          "--revision",
+          "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+          "--id-column",
+          "PageID",
+          "--shard",
+          "1/4",
+          "--output",
+          "hf://buckets/davanstrien/bhl-ocr-runs/kraken-ppocrv6-2026-09/medium/"
+        ],
+        "arguments": [],
+        "environment": {},
+        "secrets": [
+          "HF_TOKEN"
+        ],
+        "flavor": "a10g-small",
+        "labels": {
+          "name": "kraken-ppocrv6-full-r1"
+        },
+        "volumes": [
+          "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260903T091857-2368bd')"
+        ],
+        "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+        "durations": "JobDurations(scheduling_secs=8, running_secs=6773, total_secs=6781)",
+        "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+        "endpoint": "https://huggingface.co",
+        "url": "https://huggingface.co/jobs/davanstrien/6a993b840718b0f6d891409e"
+      },
+      {
+        "id": "6a993b8721c5aa7c8364fcdb",
+        "created_at": "2026-09-03 09:19:03.522000+00:00",
+        "started_at": "2026-09-03 09:19:19.410000+00:00",
+        "finished_at": "2026-09-03 11:07:50.629000+00:00",
+        "docker_image": "ghcr.io/astral-sh/uv:python3.12-bookworm",
+        "space_id": null,
+        "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+        "command": [
+          "uv",
+          "run",
+          "/data/kraken-ppocrv6-port.py",
+          "--input-dataset",
+          "davanstrien/bhl-eval-impact-full-2165-v1",
+          "--revision",
+          "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+          "--id-column",
+          "PageID",
+          "--shard",
+          "2/4",
+          "--output",
+          "hf://buckets/davanstrien/bhl-ocr-runs/kraken-ppocrv6-2026-09/medium/"
+        ],
+        "arguments": [],
+        "environment": {},
+        "secrets": [
+          "HF_TOKEN"
+        ],
+        "flavor": "a10g-small",
+        "labels": {
+          "name": "kraken-ppocrv6-full-r2"
+        },
+        "volumes": [
+          "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260903T091900-2d1368')"
+        ],
+        "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+        "durations": "JobDurations(scheduling_secs=15, running_secs=6511, total_secs=6527)",
+        "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+        "endpoint": "https://huggingface.co",
+        "url": "https://huggingface.co/jobs/davanstrien/6a993b8721c5aa7c8364fcdb"
+      },
+      {
+        "id": "6a993b8a0718b0f6d89140a6",
+        "created_at": "2026-09-03 09:19:06.701000+00:00",
+        "started_at": "2026-09-03 09:20:19.160000+00:00",
+        "finished_at": "2026-09-03 11:34:28.917000+00:00",
+        "docker_image": "ghcr.io/astral-sh/uv:python3.12-bookworm",
+        "space_id": null,
+        "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+        "command": [
+          "uv",
+          "run",
+          "/data/kraken-ppocrv6-port.py",
+          "--input-dataset",
+          "davanstrien/bhl-eval-impact-full-2165-v1",
+          "--revision",
+          "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+          "--id-column",
+          "PageID",
+          "--shard",
+          "3/4",
+          "--output",
+          "hf://buckets/davanstrien/bhl-ocr-runs/kraken-ppocrv6-2026-09/medium/"
+        ],
+        "arguments": [],
+        "environment": {},
+        "secrets": [
+          "HF_TOKEN"
+        ],
+        "flavor": "a10g-small",
+        "labels": {
+          "name": "kraken-ppocrv6-full-r3"
+        },
+        "volumes": [
+          "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20260903T091904-721eb1')"
+        ],
+        "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+        "durations": "JobDurations(scheduling_secs=72, running_secs=8049, total_secs=8122)",
+        "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+        "endpoint": "https://huggingface.co",
+        "url": "https://huggingface.co/jobs/davanstrien/6a993b8a0718b0f6d89140a6"
+      }
+    ]
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/kraken-ppocrv6.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "23263f3fcfbd79c200d1dcd85e513263b6c3408c2859ae31ea7fb5b87bf1eeb8"
+  }
+}

@@ -91,7 +91,7 @@ def output_identity(slug: str):
     }
 
 
-def build(slug, model, job_id, model_revision, plan, revisions):
+def build(slug, model, job_ids, model_revision, plan, revisions):
     driver_name = NON_SATURATE.get(slug, f"{slug}-port.py")
     driver = ROOT / "drivers" / driver_name
     serving = literal_from_module(driver, "SERVING") if driver.exists() else None
@@ -124,10 +124,17 @@ def build(slug, model, job_id, model_revision, plan, revisions):
             "No SERVING dict: this row is not a saturate/vLLM driver. Serving parameters "
             "are whatever the job command and image pin — see `job` below."
         )
-    try:
-        record["job"] = job_record(job_id)
-    except Exception as exc:  # a missing job record must be visible, never silently absent
-        record["job"] = {"id": job_id, "error": f"{type(exc).__name__}: {exc}"}
+    # A row may be produced by SEVERAL jobs: a strided shard fan-out is one run split across
+    # jobs, not several runs. Every job record is kept rather than one summary written by hand
+    # — the repo's claim is that the evidence ships with it, and a hand-written digest of four
+    # job records is exactly the typed claim this script exists to avoid.
+    records = []
+    for job_id in job_ids:
+        try:
+            records.append(job_record(job_id))
+        except Exception as exc:  # a missing job record must be visible, never silently absent
+            records.append({"id": job_id, "error": f"{type(exc).__name__}: {exc}"})
+    record["job"] = records[0] if len(records) == 1 else {"ids": job_ids, "records": records}
     record["outputs"] = output_identity(slug)
     return record
 
@@ -135,7 +142,8 @@ def build(slug, model, job_id, model_revision, plan, revisions):
 def main():
     ap = argparse.ArgumentParser(description="Generate per-model run-provenance from SERVING.")
     ap.add_argument("--job-map", default=str(ROOT / "data" / "full-2026-08" / "job-map.tsv"),
-                    help="TSV: slug<TAB>job_id<TAB>model_revision")
+                    help="TSV: slug<TAB>job_id[,job_id...]<TAB>model_revision. Several job ids "
+                         "means one run fanned out across shards, not several runs.")
     ap.add_argument("--plan", default=str(ROOT / "data" / "full-2026-08" / "launch-plan.json"))
     ap.add_argument("--out", default=str(ROOT / "data" / "full-2026-08" / "provenance"))
     args = ap.parse_args()
@@ -156,13 +164,14 @@ def main():
         if not line.strip():
             continue
         parts = line.split("\t")
-        slug, job_id = parts[0], parts[1]
+        # Comma-separated job ids: one sharded run, one board row, one provenance file.
+        slug, job_ids = parts[0], [j for j in parts[1].split(",") if j.strip()]
         model_revision = parts[2] if len(parts) > 2 else None
         model = slug_to_model.get(slug)
         if model is None:
             print(f"  SKIP {slug}: not in the launch plan")
             continue
-        record = build(slug, model, job_id, model_revision, plan, revisions)
+        record = build(slug, model, job_ids, model_revision, plan, revisions)
         path = out_dir / f"{slug}.json"
         path.write_text(json.dumps(record, indent=2, sort_keys=False) + "\n")
         pinned = "pinned" if record["model_revision"] else "NO MODEL REVISION"
