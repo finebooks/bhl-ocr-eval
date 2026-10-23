@@ -469,6 +469,13 @@ REGISTRY = {
     # formatting/orthography finding about the model, NOT a missing transform — inventing a
     # cleanup here would hide the finding behind a normalizer decision.
     "lightonai/LightOnOCR-2-1B": (strip_outer_whitespace,),
+    # lighton-ocr3-port.py (both sizes) — strip only, as for LightOnOCR-2. The card gives no
+    # post-processing. LightOn's client also repairs escaped `$` math delimiters
+    # (fix_escaped_dollars); that is a decision about math markup, which this corpus does not
+    # contain, so it is not applied. Thinking is disabled at the server and per request; the
+    # canary had no `<think>` tags, so no thinking strip is registered.
+    "lightonai/LightOnOCR-3-4B": (strip_outer_whitespace,),
+    "lightonai/LightOnOCR-3-0.8B": (strip_outer_whitespace,),
     # nuextract3-port.py, markdown mode only. NOTE the driver applies strip_thinking to the RAW
     # content without a prior `.strip()`; nuextract3_strip_thinking strips internally on both
     # branches, so the result is identical and the chain stays uniform.
