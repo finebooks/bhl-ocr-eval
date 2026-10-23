@@ -8,36 +8,40 @@ read each number; [DESIGN.md](DESIGN.md) explains why the numbers are built this
 
 ## One board
 
-**2,165 pages, 16 models.** Every page of the IMPACT-BHL ground truth
+**2,165 pages, 20 models.** Every page of the IMPACT-BHL ground truth
 (via [`finebooks/bhl-impact-gt`](https://huggingface.co/datasets/finebooks/bhl-impact-gt)),
 including 428 sparse/blank pages (plates, blanks, near-empty pages), scored for every model on the
-board. We ran 18 models; two are held back — see *What counts as a score*, below.
+board. We ran 22 models; two are held back — see *What counts as a score*, below.
 
 **A page can end three ways.** Scored; *looped* — the model hit its token cap mid repetition loop,
 which excludes the page from that row's aggregates and is counted in the Loop % column; or
 *errored* — the producer failed, and a single producer error makes the row ineligible for ranking
 (fail-closed). Every row below has zero producer errors.
 
-## Headline results (full 2,165 pages · scored 2026-08-04)
+## Headline results (full 2,165 pages · scored 2026-08-04; four rows added 2026-10-23)
 
 | Rank | Model | CER reading | 95% CI | Content CER | Sparse/blank CER | Recall | Loop % |
 |---:|---|---:|---|---:|---:|---:|---:|
 | 1 | rednote-hilab/dots.ocr | 0.0235 | [0.0156, 0.0318] | 0.0220 | 1.79 | 0.9704 | 3.88 |
 | 2 | rednote-hilab/dots.mocr | 0.0237 | [0.0143, 0.0334] | 0.0216 | 2.23 | 0.9836 | 0.88 |
-| 3 | ATH-MaaS/OvisOCR2 | 0.0305 | [0.0232, 0.0357] | 0.0280 | 2.79 | 0.9614 | 2.54 |
-| 4 | kraken/PP-OCRv6-medium | 0.0338 | [0.0237, 0.0442] | 0.0316 | 2.34 | 0.9760 | 0.00 |
-| 5 | PaddlePaddle/PaddleOCR-VL-1.6 | 0.0392 | [0.0259, 0.0499] | 0.0367 | 2.69 | 0.9415 | 6.47 |
-| 6 | allenai/olmOCR-2-7B-1025-FP8 | 0.0432 | [0.0199, 0.0694] | 0.0302 | 13.64 | 0.9573 | 0.55 |
-| 7 | lightonai/LightOnOCR-2-1B | 0.0489 | [0.0269, 0.0706] | 0.0351 | 15.79 | 0.9688 | 2.08 |
-| 8 | zai-org/GLM-OCR | 0.0491 | [0.0256, 0.0720] | 0.0236 | 26.93 | 0.9674 | 0.51 |
-| 9 | Qwen/Qwen3.5-9B | 0.0507 | [0.0292, 0.0771] | 0.0314 | 19.98 | 0.9587 | 1.52 |
-| 10 | baidu/Qianfan-OCR | 0.0575 | [0.0312, 0.0876] | 0.0404 | 17.89 | 0.9540 | 1.06 |
-| 11 | baidu/Unlimited-OCR | 0.0604 | [0.0351, 0.0820] | 0.0451 | 16.19 | 0.9537 | 0.46 |
-| 12 | deepseek-ai/DeepSeek-OCR | 0.0617 | [0.0467, 0.0754] | 0.0590 | 2.96 | 0.9206 | 0.55 |
-| 13 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
-| 14 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
-| 15 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
-| 16 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
+| 3 | **datalab-to/chandra-ocr-2** (new) | 0.0285 | [0.0198, 0.0380] | 0.0256 | 3.14 | 0.9810 | 0.09 |
+| 4 | ATH-MaaS/OvisOCR2 | 0.0305 | [0.0232, 0.0357] | 0.0280 | 2.79 | 0.9614 | 2.54 |
+| 5 | **lightonai/LightOnOCR-3-4B** (new) | 0.0312 | [0.0238, 0.0404] | 0.0290 | 2.28 | 0.9711 | 0.42 |
+| 6 | kraken/PP-OCRv6-medium | 0.0338 | [0.0237, 0.0442] | 0.0316 | 2.34 | 0.9760 | 0.00 |
+| 7 | PaddlePaddle/PaddleOCR-VL-1.6 | 0.0392 | [0.0259, 0.0499] | 0.0367 | 2.69 | 0.9415 | 6.47 |
+| 8 | allenai/olmOCR-2-7B-1025-FP8 | 0.0432 | [0.0199, 0.0694] | 0.0302 | 13.64 | 0.9573 | 0.55 |
+| 9 | **lightonai/LightOnOCR-3-0.8B** (new) | 0.0455 | [0.0308, 0.0571] | 0.0429 | 2.80 | 0.9659 | 0.88 |
+| 10 | lightonai/LightOnOCR-2-1B | 0.0489 | [0.0269, 0.0706] | 0.0351 | 15.79 | 0.9688 | 2.08 |
+| 11 | zai-org/GLM-OCR | 0.0491 | [0.0256, 0.0720] | 0.0236 | 26.93 | 0.9674 | 0.51 |
+| 12 | Qwen/Qwen3.5-9B | 0.0507 | [0.0292, 0.0771] | 0.0314 | 19.98 | 0.9587 | 1.52 |
+| 13 | baidu/Qianfan-OCR | 0.0575 | [0.0312, 0.0876] | 0.0404 | 17.89 | 0.9540 | 1.06 |
+| 14 | baidu/Unlimited-OCR | 0.0604 | [0.0351, 0.0820] | 0.0451 | 16.19 | 0.9537 | 0.46 |
+| 15 | deepseek-ai/DeepSeek-OCR | 0.0617 | [0.0467, 0.0754] | 0.0590 | 2.96 | 0.9206 | 0.55 |
+| 16 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
+| 17 | **datalab-to/indra-ocr** (new) | 0.0642 | [0.0257, 0.1010] | 0.0621 | 2.30 | 0.9493 | 0.00 |
+| 18 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
+| 19 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
+| 20 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
 
 Where 95% CIs overlap, read the models as tied — the top two are statistically identical, and most
 mid-table neighbours overlap. Loop % carries a selection bias: looped pages are excluded from that
@@ -72,8 +76,8 @@ accompanying blog post rather than here.
 
 `kraken/PP-OCRv6-medium` is the first row that is not a single end-to-end model: kraken's bundled
 `blla` segmenter finds the text lines and orders them, then a 15.9M-parameter CTC recogniser
-transcribes each one. It ranks 4th on the headline, with a confidence interval overlapping ranks
-1-5. Three things about it are worth more than the rank.
+transcribes each one. It ranks 6th on the headline (4th when it was added in September), with a
+confidence interval overlapping most of the top ten. Three things about it are worth more than the rank.
 
 **It wins the diplomatic lane outright.** CER diplomatic 0.0405, against 0.0503 for the next best
 (dots.mocr) and 0.0560 for the model that leads the reading lane. The two lanes differ in whether
@@ -129,6 +133,41 @@ Note how the three variants order: the *lowest* CER belongs to the variant that 
 looped pages are excluded and they are disproportionately hard pages — the Loop % selection bias,
 visible inside a single model. On any of the three variants, Qwen3.5-9B trails the leading
 specialists on this corpus.
+
+## Four rows added in October 2026
+
+Run 2026-10-23 on the same pinned benchmark revision, norm, scorer and post-processing version as
+the rest of the board, so the numbers are directly comparable. Combining all twenty scorecards
+reproduces every existing row's numbers exactly. Provenance for each row is in
+`data/full-2026-08/provenance/` (`chandra-ocr2`, `lighton-ocr3-4b`, `lighton-ocr3-0.8b`, `indra-ocr`).
+
+**datalab-to/chandra-ocr-2 (3rd, 0.0285).** The lowest measured loop rate of any generative model
+on the board (0.09%, 2 pages; Falcon-OCR's 0.00 is by construction, its pipeline reports no finish
+reason), and the fourth-best content CER. Its CI overlaps both dots rows. The driver
+ports Datalab's own vLLM client (`chandra-ocr` v0.2.0: `ocr_layout` prompt, image scaling) with one
+deliberate difference: the vendor client resamples a looping page up to six times at a raised
+temperature, and this driver makes one greedy attempt, like every other row. The model answers in
+HTML layout blocks; the normalizer applies the vendor's own HTML-to-markdown conversion, minus
+figure blocks (the vendor writes a hashed image link and an alt-text description into them).
+Its diplomatic CER (0.093) is much worse than its reading CER. Part of that is markup, which the
+diplomatic lane does not strip: the converted text carries about 22,000 HTML tags (tables stay
+HTML, `<sup>`/`<sub>`) and 3,500 markdown escapes. Weights: modified OpenRAIL-M (free for research,
+personal use and startups under $2M; not for use competing with Datalab's API).
+
+**lightonai/LightOnOCR-3-4B (5th, 0.0312) and -0.8B (9th, 0.0455).** Both improve on
+LightOnOCR-2-1B (0.0489), and both cut its sparse/blank hallucination by a factor of five or more
+(2.28 and 2.80 against 15.79). The 4B is better than LightOnOCR-2 on every volume; the Latin
+volume is the hardest for both sizes (0.091 and 0.115). Both run the card's request (image only,
+2048 px, temperature 0.2 / top_p 0.9) on `vllm/vllm-openai:v0.30.0`, an exception to the
+board-wide pin, because LightOn's repo says 0.27.1 makes these models loop. Apache-2.0.
+
+**datalab-to/indra-ocr (17th, 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
+run took one 8-vCPU job. It ties Tesseract on the headline, reads French best of any row
+(`histoirenaturell10cuvi` 0.015), and is weakest on the Conchologia plate volume (0.120). It
+recovers only 8% of caption tokens (the 4B recovers 70%). The package's markdown drops only page
+headers and footers by label, so the caption loss happens in its detection, not in
+post-processing. Weights: modified OpenRAIL-M (free for research, personal use and startups under
+$20M; not for use competing with Datalab's API).
 
 ## Caveats
 
