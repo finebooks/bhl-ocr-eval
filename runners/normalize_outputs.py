@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["datasets", "huggingface-hub", "pandas", "pyarrow", "docling-core>=2.89", "pillow"]
+# dependencies = ["datasets", "huggingface-hub", "pandas", "pyarrow", "docling-core>=2.89", "pillow", "beautifulsoup4", "markdownify==1.1.0", "six"]
 # ///
 """Turn cached RAW model output into the scored `markdown` column — versioned and re-runnable.
 
@@ -395,6 +395,176 @@ def smoldocling_doctags_to_markdown(text: str, image=None) -> str:
     return doctags_to_markdown(text, image)
 
 
+def chandra_html_to_markdown(text: str) -> str:
+    """Chandra's HTML layout blocks -> markdown (datalab-to/chandra-ocr-2).
+
+    chandra-ocr-2 answers the `ocr_layout` prompt with HTML `<div data-bbox data-label>` blocks.
+    This is the vendor's own conversion, `chandra/output.py: parse_markdown` from chandra-ocr
+    v0.2.0 (tag 497dfd38d7625259307c81c979d44093e9f75f44); `parse_html`, `Markdownify` and the
+    converter options are copied verbatim below (`get_image_name` is not needed, see below).
+
+    Two decisions, both about the scored text rather than the model:
+    - include_images=False. The vendor default (True) keeps `Image`/`Figure` blocks and writes
+      a placeholder `<img src="<md5>_<n>_img.webp">` into them, which markdownify turns into a
+      `![...](<hash>.webp)` link: invented characters on every plate page, plus the model's
+      alt-text DESCRIPTION of the figure, which is not page text either.
+    - include_headers_footers=False is the vendor default and is kept: Page-Header/Page-Footer
+      blocks are dropped (the board's furniture column records this policy).
+    The vendor wraps the conversion in a try/except that returns "" on failure; here a failure
+    RAISES, so it becomes an error row instead of a silent blank scored as an unread page.
+    """
+    import re as _re
+
+    import six
+    from bs4 import BeautifulSoup
+    from markdownify import MarkdownConverter, re_whitespace
+
+    re = _re  # the verbatim code below refers to `re`
+
+    def get_image_name(*_args):  # only reached with include_images=True
+        raise AssertionError("include_images is False")
+
+    # ---- verbatim from chandra-ocr v0.2.0 chandra/output.py ----
+    def parse_html(
+        html: str, include_headers_footers: bool = False, include_images: bool = True
+    ):
+        soup = BeautifulSoup(html, "html.parser")
+        top_level_divs = soup.find_all("div", recursive=False)
+        out_html = ""
+        image_idx = 0
+        div_idx = 0
+        for div in top_level_divs:
+            div_idx += 1
+            label = div.get("data-label")
+
+            if label == "Blank-Page":
+                continue
+
+            # Skip headers and footers if not included
+            if label and not include_headers_footers:
+                if label in ["Page-Header", "Page-Footer"]:
+                    continue
+            if label and not include_images:
+                if label in ["Image", "Figure"]:
+                    continue
+
+            if label in ["Image", "Figure"]:
+                img = div.find("img")
+                img_src = get_image_name(html, div_idx)
+
+                # If no tag, add one in
+                if img:
+                    img["src"] = img_src
+                    image_idx += 1
+                else:
+                    img = BeautifulSoup(f"<img src='{img_src}'/>", "html.parser")
+                    div.append(img)
+
+            # Strip img tags without src in non-image blocks (model hallucinations)
+            if label not in ["Image", "Figure"]:
+                for img_tag in div.find_all("img"):
+                    if not img_tag.get("src"):
+                        img_tag.decompose()
+
+            # Wrap text content in <p> tags if no inner HTML tags exist
+            if label in ["Text"] and not re.search(
+                "<.+>", str(div.decode_contents()).strip()
+            ):
+                # Add inner p tags if missing for text blocks
+                text_content = str(div.decode_contents()).strip()
+                text_content = f"<p>{text_content}</p>"
+                div.clear()
+                div.append(BeautifulSoup(text_content, "html.parser"))
+
+            content = str(div.decode_contents())
+            out_html += content
+        return out_html
+
+    class Markdownify(MarkdownConverter):
+        def __init__(
+            self,
+            inline_math_delimiters,
+            block_math_delimiters,
+            **kwargs,
+        ):
+            super().__init__(**kwargs)
+            self.inline_math_delimiters = inline_math_delimiters
+            self.block_math_delimiters = block_math_delimiters
+
+        def convert_math(self, el, text, parent_tags):  # noqa: ARG002 (verbatim vendor signature)
+            block = el.has_attr("display") and el["display"] == "block"
+            if block:
+                return (
+                    "\n"
+                    + self.block_math_delimiters[0]
+                    + text.strip()
+                    + self.block_math_delimiters[1]
+                    + "\n"
+                )
+            else:
+                return (
+                    " "
+                    + self.inline_math_delimiters[0]
+                    + text.strip()
+                    + self.inline_math_delimiters[1]
+                    + " "
+                )
+
+        def convert_table(self, el, text, parent_tags):  # noqa: ARG002 (verbatim vendor signature)
+            return "\n\n" + str(el) + "\n\n"
+
+        def convert_a(self, el, text, parent_tags):
+            text = self.escape(text)
+            # Escape brackets and parentheses in text
+            text = re.sub(r"([\[\]()])", r"\\\1", text)
+            return super().convert_a(el, text, parent_tags)
+
+        def escape(self, text, parent_tags=None):
+            text = super().escape(text, parent_tags)
+            if self.options["escape_dollars"]:
+                text = text.replace("$", r"\$")
+            return text
+
+        def process_text(self, el, parent_tags=None):  # noqa: ARG002 (verbatim vendor signature)
+            text = six.text_type(el) or ""
+
+            # normalize whitespace if we're not inside a preformatted element
+            if not el.find_parent("pre"):
+                text = re_whitespace.sub(" ", text)
+
+            # escape special characters if we're not inside a preformatted or code element
+            if not el.find_parent(["pre", "code", "kbd", "samp", "math"]):
+                text = self.escape(text)
+
+            # remove trailing whitespaces if any of the following condition is true:
+            # - current text node is the last node in li
+            # - current text node is followed by an embedded list
+            if el.parent.name == "li" and (
+                not el.next_sibling or el.next_sibling.name in ["ul", "ol"]
+            ):
+                text = text.rstrip()
+
+            return text
+    # ---- end verbatim ----
+
+    # parse_markdown(html, include_headers_footers=False, include_images=False), verbatim
+    # converter options, minus the try/except (see above).
+    html = parse_html(text, False, False)
+    md_cls = Markdownify(
+        heading_style="ATX",
+        bullets="-",
+        escape_misc=False,
+        escape_underscores=True,
+        escape_asterisks=True,
+        escape_dollars=True,
+        sub_symbol="<sub>",
+        sup_symbol="<sup>",
+        inline_math_delimiters=("$", "$"),
+        block_math_delimiters=("$$", "$$"),
+    )
+    return md_cls.convert(html).strip()
+
+
 def falcon_strip_unused_tokens(text: str) -> str:
     """Drop leaked `>>UNUSED_N<<` vocab tokens (tiiuae/Falcon-OCR).
 
@@ -474,6 +644,11 @@ REGISTRY = {
     # (fix_escaped_dollars); that is a decision about math markup, which this corpus does not
     # contain, so it is not applied. Thinking is disabled at the server and per request; the
     # canary had no `<think>` tags, so no thinking strip is registered.
+    # indra-ocr-port.py — strip only. `raw` is the package's own markdown. No
+    # require_non_empty: an empty page is the right answer on a blank leaf (as for kraken).
+    "datalab-to/indra-ocr": (strip_outer_whitespace,),
+    # chandra-ocr2-port.py — the vendor's HTML -> markdown conversion (see the function).
+    "datalab-to/chandra-ocr-2": (strip_outer_whitespace, chandra_html_to_markdown),
     "lightonai/LightOnOCR-3-4B": (strip_outer_whitespace,),
     "lightonai/LightOnOCR-3-0.8B": (strip_outer_whitespace,),
     # nuextract3-port.py, markdown mode only. NOTE the driver applies strip_thinking to the RAW
