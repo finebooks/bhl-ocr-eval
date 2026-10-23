@@ -1,0 +1,84 @@
+{
+  "producer": "bhl-ocr-eval drivers/lighton-ocr3-port.py via saturate on HF Jobs",
+  "run_id": "lighton-ocr3-2026-10",
+  "script": "drivers/lighton-ocr3-port.py",
+  "script_commit": "ce72e7a7dd39a985fd5d005083fef620f50c7fa9 (feat/lighton-ocr3-rows) - tree 9a6f780621823efa3806c160c544091bee61fdd4, the checkout both jobs were uploaded from. One later change to drivers/lighton-ocr3-port.py: SERVING['model'] went from the expression MODELS[0] to the literal None, so the emitter can read the dict; main() overwrites it from --model in both versions, so what was served is unchanged.",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "lightonai/LightOnOCR-3-0.8B",
+  "model_revision": "36d8636925327c671bd8e479c517a004f7566bd9",
+  "prompt": null,
+  "settings": {
+    "model": "lightonai/LightOnOCR-3-0.8B",
+    "image": "vllm/vllm-openai:v0.30.0",
+    "max_model_len": 16384,
+    "gpu_memory_utilization": 0.8,
+    "extra_args": [
+      "--default-chat-template-kwargs",
+      "{\"enable_thinking\": false}",
+      "--limit-mm-per-prompt",
+      "{\"image\": 1, \"video\": 0}",
+      "--mm-processor-cache-gb",
+      "0",
+      "--no-enable-prefix-caching"
+    ],
+    "max_tokens": 4096,
+    "temperature": 0.2,
+    "top_p": 0.9
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "id": "6adb846e046eb82b1ecd5454",
+    "created_at": "2026-10-23 15:59:42.275000+00:00",
+    "started_at": "2026-10-23 15:59:47.043000+00:00",
+    "finished_at": "2026-10-23 16:38:09.594000+00:00",
+    "docker_image": "vllm/vllm-openai:v0.30.0",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "uv",
+      "run",
+      "/data/lighton-ocr3-port.py",
+      "--model",
+      "lightonai/LightOnOCR-3-0.8B",
+      "--model-revision",
+      "36d8636925327c671bd8e479c517a004f7566bd9",
+      "--input-dataset",
+      "davanstrien/bhl-eval-impact-full-2165-v1",
+      "--revision",
+      "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+      "--image-column",
+      "image",
+      "--id-column",
+      "PageID",
+      "--output",
+      "hf://buckets/davanstrien/bhl-ocr-runs/lighton-ocr3-2026-10/lighton-ocr3-0.8b/"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "a10g-small",
+    "labels": {
+      "name": "lighton-ocr3-port-2f50c7e2"
+    },
+    "volumes": [
+      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20261023T155939-4ae4d9')"
+    ],
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=4, running_secs=2302, total_secs=2307)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6adb846e046eb82b1ecd5454"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/lighton-ocr3-0.8b.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "2a06d8f1c1ae6cba43438fe5e9e2d0c63ef7bd82bf38c8034cb9889962a4b599"
+  }
+}

@@ -80,6 +80,17 @@ META = {
     # "generalist": the board's CATCOL/filter vocabulary is {VLM, specialist, classical},
     # and an unknown type renders a colourless dot with no error.
     "Qwen/Qwen3.5-9B": (9.653, "VLM", "Qwen3.5-9B"),
+    # Added 2026-10-23, measured the same way (safetensors header).
+    "lightonai/LightOnOCR-3-4B": (4.539, "specialist", "LightOnOCR-3-4B"),
+    "lightonai/LightOnOCR-3-0.8B": (0.853, "specialist", "LightOnOCR-3-0.8B"),
+    "datalab-to/chandra-ocr-2": (5.296, "specialist", "Chandra-OCR-2"),
+    # A CPU pipeline of small ONNX models, like kraken's row. 0.00125B is the repo's one
+    # safetensors file (1,250,566 parameters, the main Latin recogniser); the vendor puts the
+    # whole default set (detector, orientation, script classifier, four recognisers, layout,
+    # reading order) at 7.3M, which ships as ONNX with no parameter header to sum. Type
+    # "classical" for the same reason as kraken: line recognisers behind a layout pipeline,
+    # not a generative page model.
+    "datalab-to/indra-ocr": (0.00125, "classical", "Indra OCR"),
     # No router-served entries. Six models scored via the Inference Providers router were
     # held out on 2026-08-03 — provider, quantization and serving configuration were never
     # recorded, so their scores are not attributable to the named model. Rationale and the
