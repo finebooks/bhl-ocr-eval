@@ -45,6 +45,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # record and the run that this script exists to prevent — the whole file is generated so that no
 # claim in it can be a typo. A row here is described as in-process instead.
 NON_SATURATE = {"tesseract": "tesseract-port.py", "kraken-ppocrv6": "kraken-ppocrv6-port.py"}
+# In-process drivers whose row slug already matches `<slug>-port.py`.
+IN_PROCESS_DRIVERS = {"indra-ocr-port.py"}
 
 
 def literal_from_module(path: pathlib.Path, name: str):
@@ -91,14 +93,20 @@ def output_identity(slug: str):
     }
 
 
-def build(slug, model, job_ids, model_revision, plan, revisions):
-    driver_name = NON_SATURATE.get(slug, f"{slug}-port.py")
+def build(slug, model, job_ids, model_revision, plan, revisions, driver_name=None):
+    driver_name = driver_name or NON_SATURATE.get(slug, f"{slug}-port.py")
     driver = ROOT / "drivers" / driver_name
     serving = literal_from_module(driver, "SERVING") if driver.exists() else None
     prompt = literal_from_module(driver, "PROMPT") if driver.exists() else None
     prompts = literal_from_module(driver, "PROMPTS") if driver.exists() else None
 
-    mechanism = "in-process (no saturate pump)" if slug in NON_SATURATE else "via saturate"
+    # A driver that serves several checkpoints (--model) leaves SERVING["model"] as None;
+    # the row's own model goes in, so the record names what this row ran.
+    if serving is not None and serving.get("model", model) is None:
+        serving = {**serving, "model": model}
+
+    in_process = slug in NON_SATURATE or driver_name in IN_PROCESS_DRIVERS
+    mechanism = "in-process (no saturate pump)" if in_process else "via saturate"
     record = {
         "producer": f"bhl-ocr-eval drivers/{driver_name} {mechanism} on HF Jobs",
         "run_id": plan["run_id"],
@@ -151,8 +159,13 @@ def main():
     plan = json.loads(pathlib.Path(args.plan).read_text())
     rev_path = pathlib.Path(args.plan).parent / "model-revisions.json"
     revisions = json.loads(rev_path.read_text()) if rev_path.exists() else {}
-    slug_to_model = {j["driver"].replace("-port.py", "").replace(".py", ""): j["model"]
-                     for j in plan["jobs"]}
+    # A job may name its row `slug` explicitly: one driver serving several checkpoints
+    # (lighton-ocr3-port.py, --model) produces several rows from one file.
+    def job_slug(job):
+        return job.get("slug") or job["driver"].replace("-port.py", "").replace(".py", "")
+
+    slug_to_model = {job_slug(j): j["model"] for j in plan["jobs"]}
+    slug_to_driver = {job_slug(j): j["driver"] for j in plan["jobs"] if "slug" in j}
 
     # Resolved, because the summary lines below print paths relative to ROOT and `relative_to`
     # raises on a relative argument — passing `--out data/…` used to crash AFTER writing every
@@ -171,7 +184,8 @@ def main():
         if model is None:
             print(f"  SKIP {slug}: not in the launch plan")
             continue
-        record = build(slug, model, job_ids, model_revision, plan, revisions)
+        record = build(slug, model, job_ids, model_revision, plan, revisions,
+                       driver_name=slug_to_driver.get(slug))
         path = out_dir / f"{slug}.json"
         path.write_text(json.dumps(record, indent=2, sort_keys=False) + "\n")
         pinned = "pinned" if record["model_revision"] else "NO MODEL REVISION"

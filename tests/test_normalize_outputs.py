@@ -241,6 +241,8 @@ def test_registry_covers_the_markdown_producing_drivers():
         "allenai/olmOCR-2-7B-1025-FP8",
         "ATH-MaaS/OvisOCR2", "PaddlePaddle/PaddleOCR-VL-1.6", "baidu/Qianfan-OCR",
         "Qwen/Qwen3.5-9B", "ds4sd/SmolDocling-256M-preview", "baidu/Unlimited-OCR",
+        "lightonai/LightOnOCR-3-4B", "lightonai/LightOnOCR-3-0.8B",
+        "datalab-to/chandra-ocr-2", "datalab-to/indra-ocr",
     }
 
 
@@ -488,3 +490,39 @@ def test_deepseek_strip_grounding_raises_on_markup_it_did_not_model():
 def test_both_deepseek_models_are_registered_with_the_strip():
     for model in ("deepseek-ai/DeepSeek-OCR", "deepseek-ai/DeepSeek-OCR-2"):
         assert NO.deepseek_strip_grounding in NO.REGISTRY[model], model
+
+
+@pytest.mark.parametrize("model", ["datalab-to/indra-ocr", "lightonai/LightOnOCR-3-4B",
+                                   "lightonai/LightOnOCR-3-0.8B"])
+def test_new_strip_only_rows_pass_an_empty_page_through(model):
+    # Same reason as kraken: an empty transcription of a blank leaf is the right answer, and
+    # require_non_empty would turn it into an error row and drop the model off the ranking.
+    chain = NO.REGISTRY[model]
+    assert chain == (NO.strip_outer_whitespace,)
+    assert NO.strip_outer_whitespace("  \n") == ""
+
+
+CHANDRA_PAGE = (
+    '<div data-bbox="10 10 900 40" data-label="Page-Header"><p>BIRDS OF GREAT BRITAIN 23</p></div>'
+    '<div data-bbox="10 50 900 400" data-label="Text">The Robin is a bird &amp; more.</div>'
+    '<div data-bbox="10 400 900 800" data-label="Image"><img alt="a robin on a branch"/>A robin.</div>'
+    '<div data-bbox="10 800 900 900" data-label="Section-Header"><h2>CHAP. II.</h2></div>'
+)
+
+
+def test_chandra_converts_layout_html_to_markdown_with_the_vendor_rules():
+    out = NO.chandra_html_to_markdown(CHANDRA_PAGE)
+    # vendor default: page headers dropped; ATX headings; text blocks become paragraphs
+    assert out == "The Robin is a bird & more.\n\n## CHAP. II."
+
+
+def test_chandra_drops_figure_blocks_and_their_descriptions():
+    # include_images=False: the vendor default would write a hashed .webp link and keep the
+    # model's alt-text description, neither of which is page text.
+    out = NO.chandra_html_to_markdown(CHANDRA_PAGE)
+    assert "webp" not in out and "robin on a branch" not in out and "A robin." not in out
+
+
+def test_chandra_blank_page_block_is_an_empty_transcription():
+    assert NO.chandra_html_to_markdown(
+        '<div data-bbox="0 0 1000 1000" data-label="Blank-Page"></div>') == ""

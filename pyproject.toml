@@ -21,6 +21,9 @@ dev = [
     "jiwer>=4,<5",
     "pyarrow>=24.0.0",
     "huggingface-hub>=1.22.0",
+    "beautifulsoup4>=4.15.0",
+    "markdownify==1.1.0",
+    "six>=1.17.0",
 ]
 
 # Keep uv.lock reproducible and CI-portable regardless of any machine-global uv config. A global

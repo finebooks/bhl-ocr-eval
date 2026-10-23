@@ -41,7 +41,9 @@ SERVING = {
     # Per-value provenance. "card" = the model card's own vllm serve / request example
     # (identical on the 4B and 0.8B cards); "upstream" = LightOn's GitHub repo;
     # "house" = our choice.
-    "model": MODELS[0],  # replaced by --model
+    # set from --model at run time; None here so the dict stays a literal that
+    # scripts/emit_run_provenance.py can read, and it fills in each row's own model.
+    "model": None,
     # upstream, and a deliberate EXCEPTION to the board-wide v0.26.0 pin. LightOn's
     # pyproject.toml (github.com/lightonai/LightOnOCR) says "vLLM 0.27.1 makes the models
     # loop; 0.30.0 is tested". A pin that upstream says makes the model loop would benchmark
