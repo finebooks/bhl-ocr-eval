@@ -148,7 +148,8 @@ def main():
 
     df = pd.DataFrame(rows)
     out = args.output.rstrip("/")
-    out = out if out.endswith(".parquet") else f"{out}/indra-ocr.parquet"
+    # part-*.parquet: the name runners/consolidate_run.py reads from a run prefix.
+    out = out if out.endswith(".parquet") else f"{out}/part-000000-indra-ocr.parquet"
     df.to_parquet(out, index=False)
     print(f"{len(df)} pages -> {out} ({int(df['error'].notna().sum())} error rows, "
           f"{workers} workers)", flush=True)
