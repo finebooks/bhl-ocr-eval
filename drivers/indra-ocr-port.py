@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["indra-ocr==1.1.2", "datasets", "huggingface-hub", "pandas", "pyarrow"]
+# dependencies = ["indra-ocr==1.1.2", "datasets", "huggingface-hub", "pandas", "pyarrow", "pillow"]
 # ///
 """datalab-to/indra-ocr — CPU-only OCR pipeline, as a self-contained inference driver.
 
