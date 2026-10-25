@@ -583,6 +583,59 @@ def falcon_strip_unused_tokens(text: str) -> str:
     return re.sub(r">>UNUSED_\d+<<", "", text)
 
 
+# The vendor renderer is ~4.8k lines across nemotron_parse/engine/, too large to port verbatim
+# here, so it is loaded from the model repo at the revision the board's run served.
+NEMOTRON_PARSE_REVISION = "62cb1e4ba153d113ff64aaf2be6e068c377cf53c"
+_nemotron_render_markdown = None
+
+
+def _load_nemotron_renderer():
+    global _nemotron_render_markdown
+    if _nemotron_render_markdown is None:
+        import sys
+
+        from huggingface_hub import snapshot_download
+
+        root = snapshot_download("nvidia/Nemotron-3.5-Parse", revision=NEMOTRON_PARSE_REVISION,
+                                 allow_patterns=["nemotron_parse/*", "nemotron_parse/**"])
+        sys.path.insert(0, root)
+        from nemotron_parse.postprocessing import render_markdown
+
+        _nemotron_render_markdown = render_markdown
+    return _nemotron_render_markdown
+
+
+def nemotron_parse_to_markdown(text: str) -> str:
+    """Render Nemotron 3.5 Parse's raw block stream as markdown (nvidia/Nemotron-3.5-Parse).
+
+    The raw reply is a sequence of `<x_..><y_..>text<x_..><y_..><class_..>` blocks. The card's
+    Postprocessing section turns it into a page with `postprocess_document(raw)["markdown"]`,
+    which is `nemotron_parse.postprocessing.render_markdown` under default options: it repairs
+    empty serialization prefixes, removes literal duplicate elements, drops the coordinate and
+    class tokens, renders tables as HTML, and normalizes list bullets and soft hyphens. This
+    calls exactly that function at the served revision (imported lazily, like docling-core for
+    SmolDocling), so the scored text is the vendor's own rendering, as for chandra-ocr-2.
+    """
+    return _load_nemotron_renderer()(text).strip()
+
+
+_UNDERSCORE_EMPHASIS = re.compile(r"(?<![\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])")
+
+
+def strip_underscore_emphasis(text: str) -> str:
+    """Unwrap markdown `_italic_` spans, keeping the text (nvidia/Nemotron-3.5-Parse).
+
+    Nemotron 3.5 Parse marks italics with underscores (`_Corvus corax_`); species names make
+    that frequent on this corpus — 5,881 spans on the full run, against 0-10 for every other row
+    but SmolDocling (472). The frozen scorer strips `*` emphasis but not `_`, so without this the
+    model is charged one inserted character per delimiter for formatting other rows express with
+    `*` or not at all. Delimiters only: the wrapped text is kept, and an underscore not shaped
+    like an emphasis delimiter (`column_1`, `kpi_strip`, runs of `___`) is left alone. The GT
+    contains a single underscore across all 1,737 content pages, so this cannot remove a target.
+    """
+    return _UNDERSCORE_EMPHASIS.sub(r"\1", text)
+
+
 # Transforms that take the page image as a second argument. Everything else is `(str) -> str`.
 IMAGE_AWARE = {"smoldocling_doctags_to_markdown"}
 
@@ -651,6 +704,11 @@ REGISTRY = {
     "datalab-to/chandra-ocr-2": (strip_outer_whitespace, chandra_html_to_markdown),
     "lightonai/LightOnOCR-3-4B": (strip_outer_whitespace,),
     "lightonai/LightOnOCR-3-0.8B": (strip_outer_whitespace,),
+    # nemotron-parse-35-port.py — the vendor's own block-stream -> markdown rendering, then its
+    # `_italic_` delimiters unwrapped (see both functions). Registered without a POSTPROC_VERSION
+    # bump, following tiiuae/Falcon-OCR: no existing model's chain changed.
+    "nvidia/Nemotron-3.5-Parse": (strip_outer_whitespace, nemotron_parse_to_markdown,
+                                  strip_underscore_emphasis),
     # nuextract3-port.py, markdown mode only. NOTE the driver applies strip_thinking to the RAW
     # content without a prior `.strip()`; nuextract3_strip_thinking strips internally on both
     # branches, so the result is identical and the chain stays uniform.
