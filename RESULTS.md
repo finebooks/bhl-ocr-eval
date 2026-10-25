@@ -36,11 +36,11 @@ which excludes the page from that row's aggregates and is counted in the Loop % 
 | 12 | Qwen/Qwen3.5-9B | 0.0507 | [0.0292, 0.0771] | 0.0314 | 19.98 | 0.9587 | 1.52 |
 | 13 | baidu/Qianfan-OCR | 0.0575 | [0.0312, 0.0876] | 0.0404 | 17.89 | 0.9540 | 1.06 |
 | 14 | baidu/Unlimited-OCR | 0.0604 | [0.0351, 0.0820] | 0.0451 | 16.19 | 0.9537 | 0.46 |
-| 15 | deepseek-ai/DeepSeek-OCR | 0.0617 | [0.0467, 0.0754] | 0.0590 | 2.96 | 0.9206 | 0.55 |
-| 16 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
-| 17 | **datalab-to/indra-ocr** (new) | 0.0642 | [0.0257, 0.1010] | 0.0621 | 2.30 | 0.9493 | 0.00 |
-| 18 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
-| 19 | **nvidia/Nemotron-3.5-Parse** (new) | 0.0648 | [0.0502, 0.0814] | 0.0517 | 13.89 | 0.9060 | 6.56 |
+| 15 | **nvidia/Nemotron-3.5-Parse** (new) | 0.0611 | [0.0485, 0.0761] | 0.0480 | 13.88 | 0.9202 | 6.56 |
+| 16 | deepseek-ai/DeepSeek-OCR | 0.0617 | [0.0467, 0.0754] | 0.0590 | 2.96 | 0.9206 | 0.55 |
+| 17 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
+| 18 | **datalab-to/indra-ocr** (new) | 0.0642 | [0.0257, 0.1010] | 0.0621 | 2.30 | 0.9493 | 0.00 |
+| 19 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
 | 20 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
 | 21 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
 
@@ -162,7 +162,7 @@ volume is the hardest for both sizes (0.091 and 0.115). Both run the card's requ
 2048 px, temperature 0.2 / top_p 0.9) on `vllm/vllm-openai:v0.30.0`, an exception to the
 board-wide pin, because LightOn's repo says 0.27.1 makes these models loop. Apache-2.0.
 
-**datalab-to/indra-ocr (17th, 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
+**datalab-to/indra-ocr (17th when added, 18th now; 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
 run took one 8-vCPU job. It ties Tesseract on the headline, reads French best of any row
 (`histoirenaturell10cuvi` 0.015), and is weakest on the Conchologia plate volume (0.120). It
 recovers only 8% of caption tokens (the 4B recovers 70%). The package's markdown drops only page
@@ -170,29 +170,41 @@ headers and footers by label, so the caption loss happens in its detection, not 
 post-processing. Weights: modified OpenRAIL-M (free for research, personal use and startups under
 $20M; not for use competing with Datalab's API).
 
-**nvidia/Nemotron-3.5-Parse (19th, 0.0648; added 2026-10-25).** Run on the same pinned benchmark,
+**nvidia/Nemotron-3.5-Parse (15th, 0.0611; added 2026-10-25).** Run on the same pinned benchmark,
 norm, scorer and post-processing version; combining all 21 scorecards leaves every other row's
-numbers unchanged. The weak point is blank and near-blank pages. On those it often writes fluent
-modern English that is not on the page ("…provided by the National Natural Science Foundation,
-which is based on the National Natural Science Foundation…") and loops until the token cap: 142
-pages (6.6%) loop, 141 of them sparse/blank (a third of that stratum; 99 are Conchologia plates),
-and the sparse/blank pages that do finish score
-13.89 against 1.8–3.1 for the other recent specialists. Looped pages are excluded from the
-aggregates, so the headline is computed on an easier page set than most rows. On content pages
-alone it scores 0.0517, behind LightOnOCR-3-0.8B (0.0429). It reads French best (0.047) and Latin
-worst (0.091), and recovers 54% of caption tokens.
+numbers unchanged. Three things hold it back, in order of size.
 
-Every decoding and serving setting is the card's: the six-token default prompt, temperature 0,
-top-k 1, repetition penalty 1.1, 8,744 output tokens, special tokens kept, and the card's H100
-`vllm serve` flags on vLLM 0.26.0, NVIDIA's stated reference runtime. The architecture needs
-NVIDIA's vLLM plugin, installed into the board-pinned image under NVIDIA's own inference lock
-(`docker/nemotron-parse-35/`). Plugin defaults are kept: one-token MTP speculative decoding
-(lossless under greedy decoding) and FlashAttention 3, hence an H200. This is the card's
-single-pass mode. The double and triple passes behind its headline ParseBench number re-read
-table and chart crops, which this corpus barely has. The normalizer applies NVIDIA's own renderer
-(`render_markdown`, default options) at the served revision. A plain strip of the coordinate and
-class tokens scores slightly worse (0.0663), so the renderer is not what costs this row. Weights
-and plugin: OpenMDW-1.1; tokenizer MIT.
+*Blank pages.* On blank and near-blank pages it often writes fluent modern English that is not on
+the page ("…provided by the National Natural Science Foundation, which is based on the National
+Natural Science Foundation…") and loops until the token cap. 142 pages (6.6%) loop, 141 of them
+sparse/blank (a third of that stratum; 99 are Conchologia plates), and the sparse/blank pages that
+do finish score 13.88 against 1.8–3.1 for the other recent specialists. Looped pages are excluded
+from the aggregates, so the headline is computed on an easier page set than most rows.
+
+*Accents.* It drops diacritics the page has: é→e alone accounts for about 9,800 substitutions on
+content pages, â→a 8,200, è→e 4,600, with ä, ü, ö, ê, à, æ and œ following. The raw completions
+already lack them, so this is the model, not the renderer. A diagnostic re-score with diacritics
+folded on both sides (`scripts/diag_accent_folded.py`; not a board metric, the reading lane keeps
+accents on purpose) lowers its CER by 0.0094, against 0.0003–0.0044 for every other row, and
+would place it 13th; on content pages it would score 0.0386, level with LightOnOCR-3-0.8B
+(0.0398). The same harness with folding switched off reproduces the board exactly.
+
+*Italics.* It marks italics with underscores (`_Corvus corax_`, 5,881 spans), which the frozen
+scorer does not strip. The normalizer unwraps them (`strip_underscore_emphasis`), as it removes
+other models' markup; the GT holds one underscore across all content pages. That moved the row
+from 0.0648 to 0.0611.
+
+On content pages it scores 0.0480. It reads French best (0.045) and Latin worst (0.089), and
+recovers 54% of caption tokens. Every decoding and serving setting is the card's: the six-token
+default prompt, temperature 0, top-k 1, repetition penalty 1.1, 8,744 output tokens, special
+tokens kept, and the card's H100 `vllm serve` flags on vLLM 0.26.0, NVIDIA's stated reference
+runtime. The architecture needs NVIDIA's vLLM plugin, installed into the board-pinned image under
+NVIDIA's own inference lock (`docker/nemotron-parse-35/`). Plugin defaults are kept: one-token MTP
+speculative decoding (lossless under greedy decoding) and FlashAttention 3, hence an H200. This is
+the card's single-pass mode; the double and triple passes behind its headline ParseBench number
+re-read table and chart crops, which this corpus barely has. The normalizer applies NVIDIA's own
+renderer (`render_markdown`, default options) at the served revision; a plain strip of the
+coordinate and class tokens scores slightly worse. Weights and plugin: OpenMDW-1.1; tokenizer MIT.
 
 ## Caveats
 

@@ -619,6 +619,23 @@ def nemotron_parse_to_markdown(text: str) -> str:
     return _load_nemotron_renderer()(text).strip()
 
 
+_UNDERSCORE_EMPHASIS = re.compile(r"(?<![\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])")
+
+
+def strip_underscore_emphasis(text: str) -> str:
+    """Unwrap markdown `_italic_` spans, keeping the text (nvidia/Nemotron-3.5-Parse).
+
+    Nemotron 3.5 Parse marks italics with underscores (`_Corvus corax_`); species names make
+    that frequent on this corpus — 5,881 spans on the full run, against 0-10 for every other row
+    but SmolDocling (472). The frozen scorer strips `*` emphasis but not `_`, so without this the
+    model is charged one inserted character per delimiter for formatting other rows express with
+    `*` or not at all. Delimiters only: the wrapped text is kept, and an underscore not shaped
+    like an emphasis delimiter (`column_1`, `kpi_strip`, runs of `___`) is left alone. The GT
+    contains a single underscore across all 1,737 content pages, so this cannot remove a target.
+    """
+    return _UNDERSCORE_EMPHASIS.sub(r"\1", text)
+
+
 # Transforms that take the page image as a second argument. Everything else is `(str) -> str`.
 IMAGE_AWARE = {"smoldocling_doctags_to_markdown"}
 
@@ -687,9 +704,11 @@ REGISTRY = {
     "datalab-to/chandra-ocr-2": (strip_outer_whitespace, chandra_html_to_markdown),
     "lightonai/LightOnOCR-3-4B": (strip_outer_whitespace,),
     "lightonai/LightOnOCR-3-0.8B": (strip_outer_whitespace,),
-    # nemotron-parse-35-port.py — the vendor's own block-stream -> markdown rendering (see the
-    # function). Registered without a POSTPROC_VERSION bump, following tiiuae/Falcon-OCR.
-    "nvidia/Nemotron-3.5-Parse": (strip_outer_whitespace, nemotron_parse_to_markdown),
+    # nemotron-parse-35-port.py — the vendor's own block-stream -> markdown rendering, then its
+    # `_italic_` delimiters unwrapped (see both functions). Registered without a POSTPROC_VERSION
+    # bump, following tiiuae/Falcon-OCR: no existing model's chain changed.
+    "nvidia/Nemotron-3.5-Parse": (strip_outer_whitespace, nemotron_parse_to_markdown,
+                                  strip_underscore_emphasis),
     # nuextract3-port.py, markdown mode only. NOTE the driver applies strip_thinking to the RAW
     # content without a prior `.strip()`; nuextract3_strip_thinking strips internally on both
     # branches, so the result is identical and the chain stays uniform.

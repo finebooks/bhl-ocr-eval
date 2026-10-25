@@ -257,6 +257,12 @@ def test_nemotron_parse_uses_the_vendor_renderer_and_trims(monkeypatch):
     assert seen == [raw]
 
 
+def test_strip_underscore_emphasis_unwraps_italics_and_keeps_other_underscores():
+    assert NO.strip_underscore_emphasis("the _Corvus corax_ and _Pica_.") == "the Corvus corax and Pica."
+    assert NO.strip_underscore_emphasis("| column_1 | kpi_strip | ___ |") == "| column_1 | kpi_strip | ___ |"
+    assert NO.strip_underscore_emphasis("snake_case_name") == "snake_case_name"
+
+
 def test_kraken_passes_an_empty_page_through_instead_of_raising():
     # The board's sparse/blank stratum is why this row exists: a line recogniser given a blank
     # leaf finds no line and correctly transcribes nothing. If require_non_empty ever gets added
