@@ -84,6 +84,9 @@ META = {
     "lightonai/LightOnOCR-3-4B": (4.539, "specialist", "LightOnOCR-3-4B"),
     "lightonai/LightOnOCR-3-0.8B": (0.853, "specialist", "LightOnOCR-3-0.8B"),
     "datalab-to/chandra-ocr-2": (5.296, "specialist", "Chandra-OCR-2"),
+    # Added 2026-10-25, measured the same way: 630,800,504 in the header (stored F32), which
+    # includes the one MTP head; the card states 630,800,496 trainable.
+    "nvidia/Nemotron-3.5-Parse": (0.631, "specialist", "Nemotron-3.5-Parse"),
     # A CPU pipeline of small ONNX models, like kraken's row. 0.00125B is the repo's one
     # safetensors file (1,250,566 parameters, the main Latin recogniser); the vendor puts the
     # whole default set (detector, orientation, script classifier, four recognisers, layout,

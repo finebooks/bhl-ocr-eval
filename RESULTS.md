@@ -8,17 +8,17 @@ read each number; [DESIGN.md](DESIGN.md) explains why the numbers are built this
 
 ## One board
 
-**2,165 pages, 20 models.** Every page of the IMPACT-BHL ground truth
+**2,165 pages, 21 models.** Every page of the IMPACT-BHL ground truth
 (via [`finebooks/bhl-impact-gt`](https://huggingface.co/datasets/finebooks/bhl-impact-gt)),
 including 428 sparse/blank pages (plates, blanks, near-empty pages), scored for every model on the
-board. We ran 22 models; two are held back — see *What counts as a score*, below.
+board. We ran 23 models; two are held back — see *What counts as a score*, below.
 
 **A page can end three ways.** Scored; *looped* — the model hit its token cap mid repetition loop,
 which excludes the page from that row's aggregates and is counted in the Loop % column; or
 *errored* — the producer failed, and a single producer error makes the row ineligible for ranking
 (fail-closed). Every row below has zero producer errors.
 
-## Headline results (full 2,165 pages · scored 2026-08-04; four rows added 2026-10-23)
+## Headline results (full 2,165 pages · scored 2026-08-04; four rows added 2026-10-23, one 2026-10-25)
 
 | Rank | Model | CER reading | 95% CI | Content CER | Sparse/blank CER | Recall | Loop % |
 |---:|---|---:|---|---:|---:|---:|---:|
@@ -40,8 +40,9 @@ which excludes the page from that row's aggregates and is counted in the Loop % 
 | 16 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
 | 17 | **datalab-to/indra-ocr** (new) | 0.0642 | [0.0257, 0.1010] | 0.0621 | 2.30 | 0.9493 | 0.00 |
 | 18 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
-| 19 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
-| 20 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
+| 19 | **nvidia/Nemotron-3.5-Parse** (new) | 0.0648 | [0.0502, 0.0814] | 0.0517 | 13.89 | 0.9060 | 6.56 |
+| 20 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
+| 21 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
 
 Where 95% CIs overlap, read the models as tied — the top two are statistically identical, and most
 mid-table neighbours overlap. Loop % carries a selection bias: looped pages are excluded from that
@@ -168,6 +169,30 @@ recovers only 8% of caption tokens (the 4B recovers 70%). The package's markdown
 headers and footers by label, so the caption loss happens in its detection, not in
 post-processing. Weights: modified OpenRAIL-M (free for research, personal use and startups under
 $20M; not for use competing with Datalab's API).
+
+**nvidia/Nemotron-3.5-Parse (19th, 0.0648; added 2026-10-25).** Run on the same pinned benchmark,
+norm, scorer and post-processing version; combining all 21 scorecards leaves every other row's
+numbers unchanged. The weak point is blank and near-blank pages. On those it often writes fluent
+modern English that is not on the page ("…provided by the National Natural Science Foundation,
+which is based on the National Natural Science Foundation…") and loops until the token cap: 142
+pages (6.6%) loop, 141 of them sparse/blank (a third of that stratum; 99 are Conchologia plates),
+and the sparse/blank pages that do finish score
+13.89 against 1.8–3.1 for the other recent specialists. Looped pages are excluded from the
+aggregates, so the headline is computed on an easier page set than most rows. On content pages
+alone it scores 0.0517, behind LightOnOCR-3-0.8B (0.0429). It reads French best (0.047) and Latin
+worst (0.091), and recovers 54% of caption tokens.
+
+Every decoding and serving setting is the card's: the six-token default prompt, temperature 0,
+top-k 1, repetition penalty 1.1, 8,744 output tokens, special tokens kept, and the card's H100
+`vllm serve` flags on vLLM 0.26.0, NVIDIA's stated reference runtime. The architecture needs
+NVIDIA's vLLM plugin, installed into the board-pinned image under NVIDIA's own inference lock
+(`docker/nemotron-parse-35/`). Plugin defaults are kept: one-token MTP speculative decoding
+(lossless under greedy decoding) and FlashAttention 3, hence an H200. This is the card's
+single-pass mode. The double and triple passes behind its headline ParseBench number re-read
+table and chart crops, which this corpus barely has. The normalizer applies NVIDIA's own renderer
+(`render_markdown`, default options) at the served revision. A plain strip of the coordinate and
+class tokens scores slightly worse (0.0663), so the renderer is not what costs this row. Weights
+and plugin: OpenMDW-1.1; tokenizer MIT.
 
 ## Caveats
 

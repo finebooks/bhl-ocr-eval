@@ -1,0 +1,79 @@
+{
+  "producer": "bhl-ocr-eval drivers/nemotron-parse-35-port.py via saturate on HF Jobs",
+  "run_id": "nemotron-parse-35-2026-10",
+  "script": "drivers/nemotron-parse-35-port.py",
+  "script_commit": "a28bb4972f1543ff33d7b98222f95af6e3d13a60 (feat/nemotron-parse-35-row), the commit drivers/nemotron-parse-35-port.py and docker/nemotron-parse-35/install-plugin.sh were uploaded from for the full run.",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "nvidia/Nemotron-3.5-Parse",
+  "model_revision": "62cb1e4ba153d113ff64aaf2be6e068c377cf53c",
+  "prompt": null,
+  "settings": {
+    "model": "nvidia/Nemotron-3.5-Parse",
+    "image": "vllm/vllm-openai:v0.26.0@sha256:770fe65b2c73ee74a5c42165cf3433de4048cc2cd9c57a937ca4e35aba5aa87b",
+    "max_model_len": 16384,
+    "gpu_memory_utilization": 0.8,
+    "extra_args": [
+      "--trust-remote-code",
+      "--dtype",
+      "bfloat16",
+      "--distributed-executor-backend",
+      "uni",
+      "--max-num-seqs",
+      "192",
+      "--max-num-batched-tokens",
+      "16384",
+      "--no-enable-prefix-caching",
+      "--limit-mm-per-prompt",
+      "{\"image\": 1}",
+      "--attention-config",
+      "{\"flash_attn_version\": 3}"
+    ],
+    "prompt": "</s><s><predict_bbox><predict_classes><output_markdown><predict_text_in_pic>",
+    "max_tokens": 8744,
+    "temperature": 0.0,
+    "top_k": 1,
+    "repetition_penalty": 1.1
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "id": "6adddb25046eb82b1ece4af0",
+    "created_at": "2026-10-25 10:34:13.683000+00:00",
+    "started_at": "2026-10-25 10:35:17.841000+00:00",
+    "finished_at": "2026-10-25 11:06:17.563000+00:00",
+    "docker_image": "vllm/vllm-openai:v0.26.0@sha256:770fe65b2c73ee74a5c42165cf3433de4048cc2cd9c57a937ca4e35aba5aa87b",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "bash",
+      "-c",
+      "bash /artifacts/nemotron-parse-35/install-plugin.sh && uv run /artifacts/nemotron-parse-35/nemotron-parse-35-port.py --input-dataset davanstrien/bhl-eval-impact-full-2165-v1 --revision 3ee88b4bfd553622561b8b2c002ac4e293a5e06e --id-column PageID --model-revision 62cb1e4ba153d113ff64aaf2be6e068c377cf53c --output hf://buckets/davanstrien/bhl-ocr-runs/nemotron-parse-35-2026-10/nemotron-parse-35/"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "h200",
+    "labels": {
+      "name": "nemotron-parse-35-full"
+    },
+    "volumes": [
+      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/artifacts', revision=None, read_only=True, path=None)"
+    ],
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=64, running_secs=1859, total_secs=1923)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6adddb25046eb82b1ece4af0"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/nemotron-parse-35.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "44983e0e8ec934dfbc5da4482eed89bf56ebc996d9298475bcf2555747e75ce8"
+  }
+}
