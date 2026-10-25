@@ -243,7 +243,18 @@ def test_registry_covers_the_markdown_producing_drivers():
         "Qwen/Qwen3.5-9B", "ds4sd/SmolDocling-256M-preview", "baidu/Unlimited-OCR",
         "lightonai/LightOnOCR-3-4B", "lightonai/LightOnOCR-3-0.8B",
         "datalab-to/chandra-ocr-2", "datalab-to/indra-ocr",
+        "nvidia/Nemotron-3.5-Parse",
     }
+
+
+def test_nemotron_parse_uses_the_vendor_renderer_and_trims(monkeypatch):
+    # The renderer itself is NVIDIA's (loaded from the pinned model repo); this checks the wiring
+    # without the network: raw goes to it untouched and its result is edge-stripped.
+    seen = []
+    monkeypatch.setattr(NO, "_nemotron_render_markdown", lambda raw: seen.append(raw) or "\nTitle\n")
+    raw = "<x_0.1><y_0.1>Title<x_0.9><y_0.2><class_Title>"
+    assert NO.nemotron_parse_to_markdown(raw) == "Title"
+    assert seen == [raw]
 
 
 def test_kraken_passes_an_empty_page_through_instead_of_raising():

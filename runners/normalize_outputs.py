@@ -583,6 +583,42 @@ def falcon_strip_unused_tokens(text: str) -> str:
     return re.sub(r">>UNUSED_\d+<<", "", text)
 
 
+# The vendor renderer is ~4.8k lines across nemotron_parse/engine/, too large to port verbatim
+# here, so it is loaded from the model repo at the revision the board's run served.
+NEMOTRON_PARSE_REVISION = "62cb1e4ba153d113ff64aaf2be6e068c377cf53c"
+_nemotron_render_markdown = None
+
+
+def _load_nemotron_renderer():
+    global _nemotron_render_markdown
+    if _nemotron_render_markdown is None:
+        import sys
+
+        from huggingface_hub import snapshot_download
+
+        root = snapshot_download("nvidia/Nemotron-3.5-Parse", revision=NEMOTRON_PARSE_REVISION,
+                                 allow_patterns=["nemotron_parse/*", "nemotron_parse/**"])
+        sys.path.insert(0, root)
+        from nemotron_parse.postprocessing import render_markdown
+
+        _nemotron_render_markdown = render_markdown
+    return _nemotron_render_markdown
+
+
+def nemotron_parse_to_markdown(text: str) -> str:
+    """Render Nemotron 3.5 Parse's raw block stream as markdown (nvidia/Nemotron-3.5-Parse).
+
+    The raw reply is a sequence of `<x_..><y_..>text<x_..><y_..><class_..>` blocks. The card's
+    Postprocessing section turns it into a page with `postprocess_document(raw)["markdown"]`,
+    which is `nemotron_parse.postprocessing.render_markdown` under default options: it repairs
+    empty serialization prefixes, removes literal duplicate elements, drops the coordinate and
+    class tokens, renders tables as HTML, and normalizes list bullets and soft hyphens. This
+    calls exactly that function at the served revision (imported lazily, like docling-core for
+    SmolDocling), so the scored text is the vendor's own rendering, as for chandra-ocr-2.
+    """
+    return _load_nemotron_renderer()(text).strip()
+
+
 # Transforms that take the page image as a second argument. Everything else is `(str) -> str`.
 IMAGE_AWARE = {"smoldocling_doctags_to_markdown"}
 
@@ -651,6 +687,9 @@ REGISTRY = {
     "datalab-to/chandra-ocr-2": (strip_outer_whitespace, chandra_html_to_markdown),
     "lightonai/LightOnOCR-3-4B": (strip_outer_whitespace,),
     "lightonai/LightOnOCR-3-0.8B": (strip_outer_whitespace,),
+    # nemotron-parse-35-port.py — the vendor's own block-stream -> markdown rendering (see the
+    # function). Registered without a POSTPROC_VERSION bump, following tiiuae/Falcon-OCR.
+    "nvidia/Nemotron-3.5-Parse": (strip_outer_whitespace, nemotron_parse_to_markdown),
     # nuextract3-port.py, markdown mode only. NOTE the driver applies strip_thinking to the RAW
     # content without a prior `.strip()`; nuextract3_strip_thinking strips internally on both
     # branches, so the result is identical and the chain stays uniform.
