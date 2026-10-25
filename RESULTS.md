@@ -187,7 +187,12 @@ already lack them, so this is the model, not the renderer. A diagnostic re-score
 folded on both sides (`scripts/diag_accent_folded.py`; not a board metric, the reading lane keeps
 accents on purpose) lowers its CER by 0.0094, against 0.0003–0.0044 for every other row, and
 would place it 13th; on content pages it would score 0.0386, level with LightOnOCR-3-0.8B
-(0.0398). The same harness with folding switched off reproduces the board exactly.
+(0.0398). The same harness with folding switched off reproduces the board exactly. The card's repetition penalty is
+not the cause: on 75 accent-heavy content pages (25 each from the French, German and Conchologia
+volumes) it keeps 30.5% of the GT's accents at 1.1 and 31.1% at 1.0. The loss depends on the
+language: German umlauts survive (73–87%), French accents mostly do not (13–23%), and Conchologia's
+Latin â/æ almost never do (5%). With accents folded those pages score about 0.008, so the letters
+themselves are read well.
 
 *Italics.* It marks italics with underscores (`_Corvus corax_`, 5,881 spans), which the frozen
 scorer does not strip. The normalizer unwraps them (`strip_underscore_emphasis`), as it removes

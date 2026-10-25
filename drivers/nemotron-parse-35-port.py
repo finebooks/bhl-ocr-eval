@@ -148,16 +148,31 @@ def main():
                     help="Strided fan-out across jobs, e.g. 2/8 (default: 0/1)")
     ap.add_argument("--max-tokens", type=int, default=SERVING["max_tokens"])
     ap.add_argument("--retry-errors", action="store_true")
+    # Diagnostics only; the board row uses the card's value. Built for the accent-loss check in
+    # RESULTS.md (does the card's repetition penalty suppress repeated accented tokens?).
+    ap.add_argument("--repetition-penalty", type=float, default=SERVING["repetition_penalty"])
+    ap.add_argument("--page-ids", default=None,
+                    help="Comma-separated PageIDs to run instead of the whole split (diagnostics)")
     args = ap.parse_args()
 
     from saturate import Auto, Engine, dataset_rows, pump, shard_select
 
     rank, world = args.shard
 
+    source, revision = args.input_dataset, args.revision
+    if args.page_ids:
+        # Filter on the id column before any image is decoded, then hand saturate the subset.
+        from datasets import load_dataset
+
+        keep = {int(x) for x in args.page_ids.split(",")}
+        source = load_dataset(args.input_dataset, args.config, split=args.split, revision=args.revision)
+        source = source.filter(lambda pid: int(pid) in keep, input_columns=[args.id_column])
+        print(f"--page-ids: {len(source)} of {len(keep)} requested pages found", flush=True)
+        revision = None  # already applied by load_dataset; saturate refuses it for a loaded object
     rows = dataset_rows(
-        args.input_dataset, config=args.config, split=args.split,
+        source, config=None if args.page_ids else args.config, split=args.split,
         columns=[args.image_column], ids=args.id_column or "index",
-        revision=args.revision, limit=args.limit,
+        revision=revision, limit=args.limit,
     )
     if world > 1:
         rows = shard_select(rows, rank=rank, world=world)
@@ -175,7 +190,7 @@ def main():
             "max_tokens": args.max_tokens,
             # vendor: sent as extra_body in the card's client, i.e. top-level body fields.
             "top_k": SERVING["top_k"],
-            "repetition_penalty": SERVING["repetition_penalty"],
+            "repetition_penalty": args.repetition_penalty,
             "skip_special_tokens": False,
         }
 
