@@ -637,6 +637,25 @@ def strip_underscore_emphasis(text: str) -> str:
 
 
 # Transforms that take the page image as a second argument. Everything else is `(str) -> str`.
+_MARKDOWN_IMAGE_LINK = re.compile(r"!\[[^\]\n]*\]\([^)\n]*\)")
+
+
+def oxr_drop_image_links(text: str) -> str:
+    """Drop markdown image links for cropped figures (SoMarkAI/OXR-1.0).
+
+    The vendor API writes every Picture block as `![](outputs/<task>/imgs/0_3.png)`, a link to a
+    crop it saved on the server. That is a placeholder, not transcription: left in, the reading
+    lane keeps `!`, the brackets and the file path, so every plate page is charged for invented
+    characters (5x rough CER on the Conchologia plates in the 2026-10-26 smoke). Same decision
+    as chandra_html_to_markdown's include_images=False and OvisOCR2's drop_bbox_blocks. The
+    captions OXR writes next to the link (`*30. a*`) are page text and stay.
+
+    Registered without a POSTPROC_VERSION bump, following tiiuae/Falcon-OCR: a new model's
+    first rules are part of the version it is born under.
+    """
+    return _MARKDOWN_IMAGE_LINK.sub("", text)
+
+
 IMAGE_AWARE = {"smoldocling_doctags_to_markdown"}
 
 
@@ -717,6 +736,17 @@ REGISTRY = {
     "allenai/olmOCR-2-7B-1025-FP8": (strip_outer_whitespace, drop_front_matter),
     # ovis-ocr2-port.py — bbox placeholder blocks dropped, applied AFTER the strip.
     "ATH-MaaS/OvisOCR2": (strip_outer_whitespace, drop_bbox_blocks),
+    # ovis-ocr3-port.py — the same prompt as OvisOCR2 (prompts/document_markdown.txt), so the
+    # same bbox placeholder blocks, dropped the same way. The card's repeated-tail cleanup is
+    # not ported, as for OvisOCR2 (see drop_bbox_blocks). No POSTPROC_VERSION bump (new model).
+    "ATH-MaaS/OvisOCR3": (strip_outer_whitespace, drop_bbox_blocks),
+    # oxr-port.py — `raw` is the vendor API's assembled markdown; figure crops are written as
+    # image links and dropped (see oxr_drop_image_links). LaTeX-wrapped labels
+    # (`$\mathrm{Msst}$`) need no rule: the frozen reading-lane markup strip removes LaTeX
+    # macros and delimiters. A footnote the vendor pipeline writes twice (its
+    # full_overlap_dedupe is off by default) is real output and stays. No require_non_empty:
+    # the pipeline answers blank leaves with "", which is the right answer (as for kraken).
+    "SoMarkAI/OXR-1.0": (strip_outer_whitespace, oxr_drop_image_links),
     # paddleocr-vl-16-port.py — strip only.
     "PaddlePaddle/PaddleOCR-VL-1.6": (strip_outer_whitespace,),
     # qianfan-ocr-port.py — strict thinking strip (raises on an unterminated block), then raises on
