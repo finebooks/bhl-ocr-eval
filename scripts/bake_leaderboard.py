@@ -94,6 +94,12 @@ META = {
     # "classical" for the same reason as kraken: line recognisers behind a layout pipeline,
     # not a generative page model.
     "datalab-to/indra-ocr": (0.00125, "classical", "Indra OCR"),
+    # Added 2026-10-26, measured the same way. OvisOCR3: 852,985,920 (BF16), the same count
+    # as OvisOCR2. OXR-1.0: 1,534,378,216 (BF16) for the recognition VLM; the card says 1.3B.
+    # The D-FINE layout model ships as a 78.8 MB layout_analysis/last.pth with no safetensors
+    # header and is not counted, as kraken's bundled segmenter is not.
+    "ATH-MaaS/OvisOCR3": (0.853, "specialist", "OvisOCR3"),
+    "SoMarkAI/OXR-1.0": (1.534, "specialist", "OXR-1.0"),
     # No router-served entries. Six models scored via the Inference Providers router were
     # held out on 2026-08-03 — provider, quantization and serving configuration were never
     # recorded, so their scores are not attributable to the named model. Rationale and the
