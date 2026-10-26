@@ -244,6 +244,7 @@ def test_registry_covers_the_markdown_producing_drivers():
         "lightonai/LightOnOCR-3-4B", "lightonai/LightOnOCR-3-0.8B",
         "datalab-to/chandra-ocr-2", "datalab-to/indra-ocr",
         "nvidia/Nemotron-3.5-Parse",
+        "ATH-MaaS/OvisOCR3", "SoMarkAI/OXR-1.0",
     }
 
 
@@ -543,3 +544,25 @@ def test_chandra_drops_figure_blocks_and_their_descriptions():
 def test_chandra_blank_page_block_is_an_empty_transcription():
     assert NO.chandra_html_to_markdown(
         '<div data-bbox="0 0 1000 1000" data-label="Blank-Page"></div>') == ""
+
+
+def test_oxr_drops_figure_image_links_and_keeps_captions():
+    # Shape from the 2026-10-26 smoke on a Conchologia plate (PageID 8966725).
+    raw = "![](outputs/8966725/imgs/0_3.png)\n\n*30. a*\n\n![](outputs/8966725/imgs/0_8.png)\n\n*31*"
+    out = NO.apply_transforms(raw, NO.resolve_transforms("SoMarkAI/OXR-1.0"))[0]
+    assert "outputs/" not in out and "![" not in out
+    assert "*30. a*" in out and "*31*" in out
+
+
+def test_oxr_leaves_bracketed_prose_alone():
+    text = "Lunâ cœlo [sic] (Plinius, Hist. Nat.) and ! marks"
+    assert NO.oxr_drop_image_links(text) == text
+
+
+def test_oxr_blank_page_is_an_empty_transcription_not_an_error():
+    # The pipeline answers a blank leaf with "", the right answer (no require_non_empty).
+    assert NO.apply_transforms("", NO.resolve_transforms("SoMarkAI/OXR-1.0"))[0] == ""
+
+
+def test_ovisocr3_shares_the_ovisocr2_chain():
+    assert NO.resolve_transforms("ATH-MaaS/OvisOCR3") == NO.resolve_transforms("ATH-MaaS/OvisOCR2")

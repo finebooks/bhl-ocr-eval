@@ -1,0 +1,66 @@
+{
+  "producer": "bhl-ocr-eval drivers/oxr-port.py via saturate on HF Jobs",
+  "run_id": "oxr-ovis-ocr3-2026-10",
+  "script": "drivers/oxr-port.py",
+  "script_commit": "cfc2086abd0cf3fa9fb5712dcfd3e8a83807d270 (feat/oxr-ovisocr3-rows), the commit drivers/oxr-port.py and drivers/ovis-ocr3-port.py were run from. oxr-port.py was copied to hf://buckets/davanstrien/jobs-artifacts/bhl-drivers/cfc2086abd0cf3fa9fb5712dcfd3e8a83807d270/ and fetched with `hf buckets cp` (the job log prints its sha256); ovis-ocr3-port.py was staged by `hf jobs uv run` from the same commit.",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "SoMarkAI/OXR-1.0",
+  "model_revision": "c708407f9d2b4df658f2543d9132b62bb7221df4",
+  "prompt": null,
+  "settings": {
+    "model": "SoMarkAI/OXR-1.0",
+    "image": "cr.hf.co/davanstrien/oxr@sha256:aa6a4fb538bd58e19d0d032d6ed7e6ddb53bc524b64361ecb554b72ffdab233d",
+    "source_repo": "https://github.com/SoMarkAI/OXR",
+    "source_commit": "c1a1dcb312ee9f691404f127785510453c0d9350",
+    "entrypoint": [
+      "/opt/oxr-venv/bin/python",
+      "/app/docker/allinone_entrypoint.py"
+    ],
+    "model_path": "/models/oxr-model",
+    "api_port": 8000,
+    "output_formats": [
+      "markdown",
+      "json"
+    ]
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "id": "6adf3bf6046eb82b1ecee05d",
+    "created_at": "2026-10-26 11:39:34.870000+00:00",
+    "started_at": "2026-10-26 11:39:39.685000+00:00",
+    "finished_at": "2026-10-26 12:13:42.578000+00:00",
+    "docker_image": "cr.hf.co/davanstrien/oxr@sha256:aa6a4fb538bd58e19d0d032d6ed7e6ddb53bc524b64361ecb554b72ffdab233d",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "bash",
+      "-c",
+      "hf buckets cp hf://buckets/davanstrien/jobs-artifacts/bhl-drivers/cfc2086abd0cf3fa9fb5712dcfd3e8a83807d270/oxr-port.py /tmp/oxr-port.py && sha256sum /tmp/oxr-port.py && uv run /tmp/oxr-port.py --model-revision c708407f9d2b4df658f2543d9132b62bb7221df4 --input-dataset davanstrien/bhl-eval-impact-full-2165-v1 --revision 3ee88b4bfd553622561b8b2c002ac4e293a5e06e --id-column PageID --output hf://buckets/davanstrien/bhl-ocr-runs/oxr-2026-10/oxr/"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "a100-large",
+    "labels": {
+      "name": "bhl-oxr-full"
+    },
+    "volumes": null,
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=4, running_secs=2042, total_secs=2047)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6adf3bf6046eb82b1ecee05d"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/oxr.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "673ce82ecfc7eeaf34a8e3c77c7cf30782423e5fe0eb8a495e4dd7cbdb8ef85a"
+  }
+}
