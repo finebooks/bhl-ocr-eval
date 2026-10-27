@@ -187,9 +187,18 @@ def start_server_cmd(model_revision) -> list[str]:
     cmd = [py, "-m", "sglang.launch_server", "--model-path", SERVING["model"],
            "--served-model-name", SERVING["served_name"], *SERVING["serve_args"],
            "--enable-metrics", "--host", "127.0.0.1", "--port", "8000"]
-    # The served checkpoint is pinned at boot, not read back from the Hub afterwards.
+    # Pinning: NOT `--revision`. With it, Baidu's SGLang skips its fix-up of the v5
+    # tokenizer components (Metaspace -> Sequence) and fastokens refuses the tokenizer at
+    # boot (smoke job 6ae0acdb, 2026-10-27). The server loads `main`, so the pin is
+    # enforced by refusing to start when `main` is not the pinned commit.
     if model_revision:
-        cmd += ["--revision", model_revision]
+        from huggingface_hub import HfApi
+
+        head = HfApi().model_info(SERVING["model"]).sha
+        if head != model_revision:
+            sys.exit(f"{SERVING['model']} main is {head}, not the pinned {model_revision}: "
+                     "re-pin deliberately (model-revisions.json) or wait")
+        print(f"model main == pinned revision {model_revision}", file=sys.stderr, flush=True)
     return cmd
 
 
@@ -206,7 +215,8 @@ def main():
     ap.add_argument("--revision", default=None,
                     help="Pin the input revision (index ids are only stable per revision)")
     ap.add_argument("--model-revision", default=None,
-                    help="Pin the SERVED model checkpoint sha (and the wheel read from it)")
+                    help="Pinned model checkpoint sha: the wheel is read from it, and the job "
+                         "refuses to start unless the model's main is that commit")
     ap.add_argument("--id-column", default=None,
                     help="Column to use as row id (default: split-index ids)")
     ap.add_argument("--limit", type=int, default=None)
