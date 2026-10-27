@@ -100,6 +100,10 @@ META = {
     # header and is not counted, as kraken's bundled segmenter is not.
     "ATH-MaaS/OvisOCR3": (0.853, "specialist", "OvisOCR3"),
     "SoMarkAI/OXR-1.0": (1.534, "specialist", "OXR-1.0"),
+    # Added 2026-10-27, measured the same way: 3,343,978,240 (BF16) at 9cf077c, 7.9M more than
+    # Unlimited-OCR's 3,336,106,240. The card calls it a 3B MoE with ~0.5B active per token;
+    # the board counts total parameters, as for every other row.
+    "baidu/Unlimited-OCR-2": (3.344, "specialist", "Unlimited-OCR-2"),
     # No router-served entries. Six models scored via the Inference Providers router were
     # held out on 2026-08-03 — provider, quantization and serving configuration were never
     # recorded, so their scores are not attributable to the named model. Rationale and the
