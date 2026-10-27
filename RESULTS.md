@@ -292,6 +292,15 @@ vLLM support for v2: the row runs Baidu's SGLang wheel from the model repo on
 `lmsysorg/sglang:v0.5.20-cu130`, an exception to the board-wide pin. 2,165 pages took 42 minutes
 on one RTX PRO 6000. MIT.
 
+*Why one page per request.* A diagnostic run of the model's multi-page mode (16 consecutive pages
+per request, base mode at 1280 px, as in the uv-scripts recipe) scored 0.247. Most of that is page
+attribution around plates, not reading: in Conchologia, 108 of 297 pages with text carry the next
+page's text, though every request returned the right number of pages. On the three volumes without
+plates it is level with or better than one page per request in the same mode (Trudy 0.050 against
+0.060), but still behind this row's tiled single pages, which are worth more than the context: one
+page per request in base mode scores 0.0503. Not a board row; the driver and results are on the
+`diag/uocr2-multipage` branch.
+
 ## Caveats
 
 - **Wide CIs by design.** The ground truth spans six volumes (books), and the bootstrap resamples
