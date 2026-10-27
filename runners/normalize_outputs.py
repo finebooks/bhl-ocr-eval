@@ -656,6 +656,39 @@ def oxr_drop_image_links(text: str) -> str:
     return _MARKDOWN_IMAGE_LINK.sub("", text)
 
 
+# Unlimited-OCR-2's block markup. Anything matching after Baidu's converter ran is markup it did
+# not model, and the scored column must not carry it (same fail-loud rule as Unlimited-OCR).
+UOCR2_RESIDUAL_RE = re.compile(r"<\s*/?\s*(?:BLOCK|FORK|PAGE|MERGE|LEVEL)\b[^>]*>|<\s*[|｜][^|｜]{0,40}[|｜]\s*>")
+
+
+def unlimited_ocr2_to_markdown(raw: str) -> str:
+    """Grounded Unlimited-OCR-2 output -> the plain text the benchmark scores (baidu/Unlimited-OCR-2).
+
+    The raw reply is `<BLOCK>type[x1, y1, x2, y2]<FORK>text` blocks, `<LEVELn>` on titles and
+    `<MERGE>` between joined blocks. This runs Baidu's own Markdown converter (`convert` from
+    utils/process_unlimitedOCR2.py, vendored verbatim in runners/unlimited_ocr2_postprocess.py),
+    as chandra-ocr-2 and Nemotron 3.5 Parse are scored on their vendors' rendering. Its defaults
+    are kept: running heads, footers and page numbers stay (as for Unlimited-OCR), titles become
+    `#` headings. One decision on top: the converter writes every figure block as a link to a
+    crop it never saves (`![](page1_x1_y1_x2_y2.jpg)`); that is a placeholder, not transcription,
+    and is dropped, as for OXR-1.0 (see oxr_drop_image_links). A caption block next to a figure is
+    page text and stays.
+
+    Raises if block markup survives. An empty result is returned, not raised (POSTPROC 2).
+    Registered without a POSTPROC_VERSION bump: a new model's first rules are part of the version
+    it is born under.
+    """
+    import unlimited_ocr2_postprocess
+
+    text = unlimited_ocr2_postprocess.convert(raw)
+    text = _MARKDOWN_IMAGE_LINK.sub("", text)
+    text = re.sub(r"\n{3,}", "\n\n", text).strip()
+    residue = UOCR2_RESIDUAL_RE.findall(text)
+    if residue:
+        raise ValueError(f"unhandled Unlimited-OCR-2 markup survived convert: {residue[:5]}")
+    return text
+
+
 IMAGE_AWARE = {"smoldocling_doctags_to_markdown"}
 
 
@@ -763,6 +796,10 @@ REGISTRY = {
     # unlimited-ocr-port.py — edge specials off, then the two-pass grounding strip, which raises
     # both on surviving `<|…|>` markup and on an empty result.
     "baidu/Unlimited-OCR": (strip_outer_whitespace, strip_edge_specials, unlimited_ocr_to_markdown),
+    # unlimited-ocr2-port.py — Baidu's own converter, figure placeholders dropped (see
+    # unlimited_ocr2_to_markdown). No require_non_empty: an empty page is an empty transcription.
+    # No POSTPROC_VERSION bump (new model).
+    "baidu/Unlimited-OCR-2": (strip_outer_whitespace, unlimited_ocr2_to_markdown),
 }
 
 # Drivers that produce an `extraction` column and no markdown at all: schema-guided image->JSON.

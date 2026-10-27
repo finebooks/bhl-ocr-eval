@@ -21,8 +21,12 @@
 # `*SERVING["extra_args"]` reads as unpacking a possible `str`. Fixing it properly means giving
 # serve args their own structured type rather than annotating twelve dicts — tracked against the
 # saturate API, not worked around here.
+#
+# runners/unlimited_ocr2_postprocess.py is excluded too: it is Baidu's converter vendored
+# byte-for-byte (see its header), so a fix there would make it no longer the vendor's code. It
+# calls no first-party module.
 [src]
-exclude = ["drivers/"]
+exclude = ["drivers/", "runners/unlimited_ocr2_postprocess.py"]
 
 [environment]
 extra-paths = ["scoring"]

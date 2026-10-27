@@ -244,7 +244,7 @@ def test_registry_covers_the_markdown_producing_drivers():
         "lightonai/LightOnOCR-3-4B", "lightonai/LightOnOCR-3-0.8B",
         "datalab-to/chandra-ocr-2", "datalab-to/indra-ocr",
         "nvidia/Nemotron-3.5-Parse",
-        "ATH-MaaS/OvisOCR3", "SoMarkAI/OXR-1.0",
+        "ATH-MaaS/OvisOCR3", "SoMarkAI/OXR-1.0", "baidu/Unlimited-OCR-2",
     }
 
 
@@ -566,3 +566,34 @@ def test_oxr_blank_page_is_an_empty_transcription_not_an_error():
 
 def test_ovisocr3_shares_the_ovisocr2_chain():
     assert NO.resolve_transforms("ATH-MaaS/OvisOCR3") == NO.resolve_transforms("ATH-MaaS/OvisOCR2")
+
+
+UOCR2_RAW = ("<BLOCK>header[88, 41, 912, 60]<FORK>THE BIRDS OF EUROPE."
+             "<BLOCK>title<LEVEL2>[120, 80, 880, 110]<FORK>CHAPTER I."
+             "<BLOCK>text[90, 120, 910, 500]<FORK>The raven is the largest of the"
+             "<BLOCK>image[100, 520, 900, 880]<FORK>"
+             "<BLOCK>text[300, 890, 700, 910]<FORK>Fig. 3. Corvus corax."
+             "<BLOCK>page_number[480, 950, 520, 970]<FORK>12")
+
+
+def test_uocr2_strips_block_markup_and_keeps_page_text():
+    out = NO.apply_transforms(UOCR2_RAW, NO.resolve_transforms("baidu/Unlimited-OCR-2"))[0]
+    assert "<BLOCK>" not in out and "<FORK>" not in out and "[88, 41" not in out
+    for kept in ("THE BIRDS OF EUROPE.", "CHAPTER I.", "The raven", "Fig. 3. Corvus corax.", "12"):
+        assert kept in out
+
+
+def test_uocr2_drops_the_figure_placeholder_link():
+    out = NO.unlimited_ocr2_to_markdown(UOCR2_RAW)
+    assert "![](" not in out and ".jpg" not in out
+
+
+def test_uocr2_joins_merged_blocks():
+    raw = ("<BLOCK>text[90, 120, 910, 300]<FORK>first column line<MERGE>"
+           "<BLOCK>text[90, 300, 910, 500]<FORK> continues here")
+    out = NO.unlimited_ocr2_to_markdown(raw)
+    assert "<MERGE>" not in out and "first column line" in out and "continues here" in out
+
+
+def test_uocr2_empty_completion_is_an_empty_transcription():
+    assert NO.apply_transforms("", NO.resolve_transforms("baidu/Unlimited-OCR-2"))[0] == ""
