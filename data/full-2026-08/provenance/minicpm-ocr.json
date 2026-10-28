@@ -1,0 +1,60 @@
+{
+  "producer": "bhl-ocr-eval drivers/minicpm-ocr-port.py in-process (no saturate pump) on HF Jobs",
+  "run_id": "minicpm-ocr-2026-10",
+  "script": "drivers/minicpm-ocr-port.py",
+  "script_commit": "davanstrien/uv-scripts 210c5cf (branch ocr/minicpm-ocr, PR #138): the job ran ocr/minicpm-ocr.py from https://raw.githubusercontent.com/davanstrien/uv-scripts/210c5cf/ocr/minicpm-ocr.py. drivers/minicpm-ocr-port.py is that file byte-for-byte.",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "openbmb/MiniCPM-OCR-1.0",
+  "model_revision": "a59a4acf215e34c6d73149e9eafdb88ed2086e39",
+  "prompt": null,
+  "settings": null,
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "settings_note": "No SERVING dict: this row is not a saturate/vLLM driver. Serving parameters are whatever the job command and image pin \u2014 see `job` below.",
+  "job": {
+    "id": "6ae1a34a41e90535df770732",
+    "created_at": "2026-10-28 07:24:58.708000+00:00",
+    "started_at": "2026-10-28 07:25:04.793000+00:00",
+    "finished_at": "2026-10-28 08:14:03.183000+00:00",
+    "docker_image": "cr.hf.co/davanstrien/minicpm-ocr:1.0-vllm-5d35ce3",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "uv",
+      "run",
+      "/data/minicpm-ocr.py",
+      "davanstrien/bhl-eval-impact-full-2165-v1",
+      "davanstrien/bhl-minicpm-ocr-1.0-full-footnotes",
+      "--private",
+      "--keep-labels",
+      "footnote",
+      "aside_text"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "rtx-pro-6000",
+    "labels": {
+      "name": "minicpm-ocr-bhl-full-footnotes"
+    },
+    "volumes": [
+      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20261028T072455-4ffcd5')"
+    ],
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=6, running_secs=2938, total_secs=2944)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6ae1a34a41e90535df770732"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/minicpm-ocr.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "a10c70bf5133f81ac5a993298fa89d1104c6ff070b345f1b40c0a626c7a5eeca"
+  }
+}
