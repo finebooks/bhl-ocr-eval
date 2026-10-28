@@ -104,6 +104,10 @@ META = {
     # Unlimited-OCR's 3,336,106,240. The card calls it a 3B MoE with ~0.5B active per token;
     # the board counts total parameters, as for every other row.
     "baidu/Unlimited-OCR-2": (3.344, "specialist", "Unlimited-OCR-2"),
+    # Added 2026-10-28, measured the same way: 1,300,434,160 (BF16) at a59a4ac. The PP-DocLayoutV3
+    # layout model (Paddle inference format, no safetensors header) and the DSpark draft model
+    # (speeds decoding, does not change the output) are not counted, as for OXR-1.0's D-FINE.
+    "openbmb/MiniCPM-OCR-1.0": (1.300, "specialist", "MiniCPM-OCR-1.0"),
     # No router-served entries. Six models scored via the Inference Providers router were
     # held out on 2026-08-03 — provider, quantization and serving configuration were never
     # recorded, so their scores are not attributable to the named model. Rationale and the

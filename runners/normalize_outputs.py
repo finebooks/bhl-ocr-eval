@@ -780,6 +780,12 @@ REGISTRY = {
     # full_overlap_dedupe is off by default) is real output and stays. No require_non_empty:
     # the pipeline answers blank leaves with "", which is the right answer (as for kraken).
     "SoMarkAI/OXR-1.0": (strip_outer_whitespace, oxr_drop_image_links),
+    # minicpm-ocr-port.py — `raw` is the minicpm-ocr SDK's assembled page Markdown (layout regions
+    # read one by one, joined in reading order; tables as HTML, formulas as LaTeX). Each figure is
+    # written as `![image]()`, a placeholder, and dropped as for OXR-1.0. The row keeps footnotes
+    # and side notes (`--keep-labels footnote aside_text`); the SDK leaves them out by default.
+    # No require_non_empty: a page with no text regions assembles to "".
+    "openbmb/MiniCPM-OCR-1.0": (strip_outer_whitespace, oxr_drop_image_links),
     # paddleocr-vl-16-port.py — strip only.
     "PaddlePaddle/PaddleOCR-VL-1.6": (strip_outer_whitespace,),
     # qianfan-ocr-port.py — strict thinking strip (raises on an unterminated block), then raises on

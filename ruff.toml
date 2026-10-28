@@ -11,3 +11,7 @@ extend-select = ["B", "ARG"]
 # not dead code, and ARG001 cannot tell the difference. Scoped to this directory so the rule
 # keeps earning its keep everywhere else.
 "drivers/*.py" = ["ARG001"]
+# drivers/minicpm-ocr-port.py — uv-scripts ocr/minicpm-ocr.py at 210c5cf, copied byte-for-byte: it
+# is the exact file the scored job ran from that commit's raw URL. One `l` loop variable in its
+# dataset-card template is left as written rather than make the copy differ from what ran.
+"drivers/minicpm-ocr-port.py" = ["ARG001", "E741"]
