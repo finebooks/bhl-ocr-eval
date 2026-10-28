@@ -245,6 +245,7 @@ def test_registry_covers_the_markdown_producing_drivers():
         "datalab-to/chandra-ocr-2", "datalab-to/indra-ocr",
         "nvidia/Nemotron-3.5-Parse",
         "ATH-MaaS/OvisOCR3", "SoMarkAI/OXR-1.0", "baidu/Unlimited-OCR-2",
+        "openbmb/MiniCPM-OCR-1.0",
     }
 
 
@@ -562,6 +563,15 @@ def test_oxr_leaves_bracketed_prose_alone():
 def test_oxr_blank_page_is_an_empty_transcription_not_an_error():
     # The pipeline answers a blank leaf with "", the right answer (no require_non_empty).
     assert NO.apply_transforms("", NO.resolve_transforms("SoMarkAI/OXR-1.0"))[0] == ""
+
+
+def test_minicpm_ocr_drops_figure_placeholders_and_keeps_text():
+    # Shape from the 2026-10-28 full run: a plate page and a captioned figure.
+    raw = "![image]()\n\n*JACKDAW. PLATE 98.*\n\n<table><tr><td>Plate.</td></tr></table>"
+    out = NO.apply_transforms(raw, NO.resolve_transforms("openbmb/MiniCPM-OCR-1.0"))[0]
+    assert "![" not in out
+    assert "*JACKDAW. PLATE 98.*" in out and "<table>" in out
+    assert NO.apply_transforms("![image]()", NO.resolve_transforms("openbmb/MiniCPM-OCR-1.0"))[0] == ""
 
 
 def test_ovisocr3_shares_the_ovisocr2_chain():
