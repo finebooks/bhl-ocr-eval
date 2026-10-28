@@ -163,8 +163,8 @@ personal use and startups under $2M; not for use competing with Datalab's API).
 LightOnOCR-2-1B (0.0489), and both cut its sparse/blank hallucination by a factor of five or more
 (2.28 and 2.80 against 15.79). The 4B is better than LightOnOCR-2 on every volume; the Latin
 volume is the hardest for both sizes (0.091 and 0.115). Both run the card's request (image only,
-2048 px, temperature 0.2 / top_p 0.9) on `vllm/vllm-openai:v0.30.0`, an exception to the
-board-wide pin, because LightOn's repo says 0.27.1 makes these models loop. Apache-2.0.
+2048 px, temperature 0.2 / top_p 0.9) on `vllm/vllm-openai:v0.30.0`, not the default
+vLLM image (see *Serving images*), because LightOn's repo says 0.27.1 makes these models loop. Apache-2.0.
 
 **datalab-to/indra-ocr (17th when added, 21st now; 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
 run took one 8-vCPU job. It ties Tesseract on the headline, reads French best of any row
@@ -207,7 +207,7 @@ On content pages it scores 0.0480. It reads French best (0.045) and Latin worst 
 recovers 54% of caption tokens. Every decoding and serving setting is the card's: the six-token
 default prompt, temperature 0, top-k 1, repetition penalty 1.1, 8,744 output tokens, special
 tokens kept, and the card's H100 `vllm serve` flags on vLLM 0.26.0, NVIDIA's stated reference
-runtime. The architecture needs NVIDIA's vLLM plugin, installed into the board-pinned image under
+runtime. The architecture needs NVIDIA's vLLM plugin, installed into the default vLLM image under
 NVIDIA's own inference lock (`docker/nemotron-parse-35/`). Plugin defaults are kept: one-token MTP
 speculative decoding (lossless under greedy decoding) and FlashAttention 3, hence an H200. This is
 the card's single-pass mode; the double and triple passes behind its headline ParseBench number
@@ -227,7 +227,7 @@ of the 428, mostly Conchologia plates (70) and Birds plates (39), it writes a no
 instead of nothing — "Based on the image provided, there is no readable text, charts, or formulas
 present. The image appears to be a blank page with a pale yellow background… Therefore, the
 extracted content is empty." Its CI overlaps OvisOCR2's and most of the rows from 3rd to 9th.
-10 pages (0.46%) loop. Board-wide `vllm/vllm-openai:v0.26.0`. Apache-2.0.
+10 pages (0.46%) loop. Default `vllm/vllm-openai:v0.26.0`. Apache-2.0.
 
 **SoMarkAI/OXR-1.0 (22nd when added, 24th now; 0.1117).** A pipeline, like Falcon-OCR: a D-FINE layout model finds
 regions, a 1.5B VLM reads each one and sets the reading order, and the vendor API assembles the
@@ -252,7 +252,7 @@ API reports no finish reason, so, as with Falcon-OCR, it cannot be counted in Lo
 as text. These three pages carry 18% of the row's edits.
 
 The vendor's plugin and entrypoint require vLLM 0.25.1, so the row runs on an image built
-unmodified from the vendor's `docker/Dockerfile.allinone`, an exception to the board-wide pin.
+unmodified from the vendor's `docker/Dockerfile.allinone`, not the default vLLM image (see *Serving images*).
 Weights are downloaded at the pinned revision when the job starts rather than mounted: on
 2026-10-26 the Jobs model mount served some small repo files with the wrong size, and the vendor's
 plugin install failed on a truncated `pyproject.toml`. Licence: Apache-2.0 with additional
@@ -290,7 +290,7 @@ n-gram guard with window 128, 8,000 output tokens, temperature 0. Its raw output
 (`utils/process_unlimitedOCR2.py`, vendored verbatim) and drops the figure placeholder links it
 writes, as for OXR-1.0. Running heads and page numbers are kept, as for Unlimited-OCR. There is no
 vLLM support for v2: the row runs Baidu's SGLang wheel from the model repo on
-`lmsysorg/sglang:v0.5.20-cu130`, an exception to the board-wide pin. 2,165 pages took 42 minutes
+`lmsysorg/sglang:v0.5.20-cu130` (see *Serving images*). 2,165 pages took 42 minutes
 on one RTX PRO 6000. MIT.
 
 *Why one page per request.* A diagnostic run of the model's multi-page mode (16 consecutive pages
@@ -333,7 +333,7 @@ table read across, which half the board also gets wrong (about 0.69 on those pag
 
 The model has no vLLM release support yet, so the row runs on a vLLM nightly (5d35ce3) with
 OpenBMB's transformers pin and the SDK in its own environment, built into a public image,
-`cr.hf.co/davanstrien/minicpm-ocr`, an exception to the board-wide pin. Decoding uses the
+`cr.hf.co/davanstrien/minicpm-ocr` (see *Serving images*). Decoding uses the
 matching DSpark draft model, which changes speed, not output. The producer is the uv-scripts
 recipe `ocr/minicpm-ocr.py` at 210c5cf, copied byte-for-byte to
 `drivers/minicpm-ocr-port.py`. 2,165 pages took 49 minutes on one RTX PRO 6000. Apache-2.0.
@@ -370,6 +370,22 @@ sensitive to all three.
 surya-ocr-2 and PaddlePaddle's PP-OCRv6 join the board in v1.1, once their runs meet the same
 bar. Note that PaddlePaddle's PP-OCRv6 is a different model from the `kraken/PP-OCRv6-medium` row
 above, which shares the architecture but not the publisher or the training corpus.
+
+## Serving images
+
+Every row's exact image is pinned in its provenance file (`job.docker_image` in
+[`data/full-2026-08/provenance/`](data/full-2026-08/provenance/)). Rows served by vLLM use
+`vllm/vllm-openai:v0.26.0` unless the model needs otherwise; these rows do not:
+
+| Row | Image | Why |
+|---|---|---|
+| LightOnOCR-3-4B, LightOnOCR-3-0.8B | `vllm/vllm-openai:v0.30.0` | LightOn's repo says 0.27.1 makes these models loop |
+| Nemotron-3.5-Parse | `vllm/vllm-openai:v0.26.0` + NVIDIA's vLLM plugin | the architecture needs the plugin, installed under NVIDIA's inference lock |
+| OXR-1.0 | `cr.hf.co/davanstrien/oxr` (vendor `Dockerfile.allinone`, vLLM 0.25.1) | the vendor's plugin and entrypoint require vLLM 0.25.1 |
+| Unlimited-OCR-2 | `lmsysorg/sglang:v0.5.20-cu130` + Baidu's SGLang wheel | no vLLM support for v2 |
+| MiniCPM-OCR-1.0 | `cr.hf.co/davanstrien/minicpm-ocr` (vLLM nightly 5d35ce3 + SDK) | the architecture is not in a vLLM release yet |
+| Falcon-OCR | `ghcr.io/tiiuae/falcon-ocr` (vendor image) | vendor pipeline port |
+| tesseract-5, kraken PP-OCRv6, Indra OCR | `ghcr.io/astral-sh/uv:python3.12-bookworm` | CPU pipelines, no vLLM |
 
 ## Where the numbers come from
 
