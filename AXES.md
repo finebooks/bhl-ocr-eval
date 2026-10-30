@@ -2,7 +2,7 @@
 
 > Generated from `scorer.REGISTRY` by `scripts/gen_axis_catalogue.py` — **do not hand-edit.**
 
-Scorer `3.0` · norm `2026-07-20a` · grapheme mode `codepoint` · illegible marker = U+FFFD wildcard.
+Scorer `3.0` · norm `2026-10-30a` · grapheme mode `codepoint` · illegible marker = U+FFFD wildcard.
 
 The headline scores the docling **BODY** layer (furniture is an ignore-set); `over_extraction` scores against the **full** text so faithful furniture reading is not punished; furniture is reported as a directionless policy diagnostic. Token diagnostics are global evidence proxies, not spatial attribution. See `DESIGN.md`.
 

@@ -179,3 +179,136 @@ def test_provenance_records_the_alignment_engine_that_produced_the_supports():
     p = N.provenance()
     assert p["norm_version"] == N.NORM_VERSION
     assert p["rapidfuzz_version"] and isinstance(p["rapidfuzz_version"], str)
+
+
+# --- norm 2026-10-30a: repeated-header index tables are read one column group at a time ---
+import pathlib  # noqa: E402
+
+FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures"
+
+
+def _html(*rows, cell="td"):
+    body = "".join("<tr>" + "".join(f"<{cell}>{c}</{cell}>" for c in row) + "</tr>" for row in rows)
+    return f"<table>{body}</table>"
+
+
+TWO_COLUMN_INDEX = [
+    ["", "Plate.", "Species.", "", "Plate.", "Species."],
+    ["abbreviatus, Jan.", "LIX.", "399", "auratus, Pfr.", "LI.", "335"],
+    ["Abyssinicus, Ruppell", "XLVI.", "296", "aureus, Swainson", "XXIX.", "187"],
+]
+GROUP_MAJOR = ("plate. species. plate. species. abbreviatus, jan. lix. 399 abyssinicus, ruppell xlvi. 296 "
+               "auratus, pfr. li. 335 aureus, swainson xxix. 187")
+
+
+def test_repeated_header_index_is_read_one_printed_column_at_a_time():
+    """The GT reads a two-column index down the left column, then the right; row-major tag
+    stripping interleaved the two. Each 3-cell group is read top to bottom, then the next."""
+    assert N.norm(_html(*TWO_COLUMN_INDEX), "reading") == GROUP_MAJOR
+
+
+def test_th_header_cells_count_as_the_header_row():
+    table = _html(TWO_COLUMN_INDEX[0], cell="th")[:-len("</table>")] + _html(*TWO_COLUMN_INDEX[1:])[len("<table>"):]
+    assert N.norm(table, "reading") == GROUP_MAJOR
+
+
+def test_header_missing_a_blank_cell_still_regroups_by_data_width():
+    """Models often drop the second blank header cell: 5 header cells over 6 data columns. The repeat
+    count comes from the non-empty labels (2), the group width from the data (6 / 2 = 3)."""
+    header = ["", "Plate.", "Species.", "Plate.", "Species."]
+    assert N.norm(_html(header, *TWO_COLUMN_INDEX[1:]), "reading") == GROUP_MAJOR
+
+
+def test_four_cell_header_over_six_data_columns_keeps_each_entry_with_its_numbers():
+    """[Plate, Species, Plate, Species] over 6 data columns must split 3+3, not 2+2+2 — splitting by
+    header width would separate a name from its plate and species numbers."""
+    header = ["Plate.", "Species.", "Plate.", "Species."]
+    assert N.norm(_html(header, *TWO_COLUMN_INDEX[1:]), "reading") == GROUP_MAJOR
+
+
+def test_a_single_label_repeated_per_column_reads_column_major():
+    """Period 1: ['Vol. page'] x 3 over 3 columns, each cell a whole entry — three printed columns."""
+    table = _html(["Vol. page"] * 3, ["a .. ii 1", "c .. ii 3", "e .. ii 5"], ["b .. ii 2", "d .. ii 4", "f .. ii 6"])
+    assert N.norm(table, "reading") == "vol. page vol. page vol. page a .. ii 1 b .. ii 2 c .. ii 3 d .. ii 4 e .. ii 5 f .. ii 6"
+
+
+def test_header_labels_match_ignoring_case_and_punctuation():
+    header = ["", "Plate.", "Species.", "", "plate,", "SPECIES"]
+    assert N.norm(_html(header, *TWO_COLUMN_INDEX[1:]), "reading").endswith("aureus, swainson xxix. 187")
+    assert N.regroup_tables(_html(header, *TWO_COLUMN_INDEX[1:])) != _html(header, *TWO_COLUMN_INDEX[1:])
+
+
+@pytest.mark.parametrize("header", [
+    ["", "Plate.", "Species.", "", "Plafe.", "Species."],   # an OCR misspelling breaks the repeat: known limit
+    ["", "Plate.", "Species."],                              # one printed column per table: nothing to regroup
+    ["1", "1", "1", "1", "1", "1"],                          # a repeated value with no letters is not a header
+])
+def test_tables_without_a_repeated_word_header_are_unchanged(header):
+    table = _html(header, *TWO_COLUMN_INDEX[1:])
+    assert N.regroup_tables(table) == table
+
+
+def test_headerless_grid_is_unchanged():
+    """A grid whose first row is data has no header to repeat. Left row-major — a known limit."""
+    table = _html(*TWO_COLUMN_INDEX[1:])
+    assert N.regroup_tables(table) == table
+
+
+def test_data_width_not_divisible_by_the_repeat_count_is_unchanged():
+    table = _html(["Plate.", "Species.", "Plate.", "Species."], ["a", "I.", "1", "b", "II."])
+    assert N.regroup_tables(table) == table
+
+
+def test_real_data_table_is_unchanged():
+    """An errata grid (chandra-ocr-2, page 12342054) is row-major in the GT; its header does not
+    repeat, so it must keep the row-major reading."""
+    table = (FIXTURES / "chandra-ocr-2_12342054_errata_table.html").read_text(encoding="utf-8")
+    assert N.regroup_tables(table) == table
+    assert N.regroup_tables(f"Druckfehler.\n{table}\nEnde") == f"Druckfehler.\n{table}\nEnde"
+
+
+def test_markdown_pipe_tables_regroup_the_same_way():
+    lines = ["| " + " | ".join(row) + " |" for row in TWO_COLUMN_INDEX]
+    lines.insert(1, "|---|---|---|---|---|---|")
+    assert N.norm("\n".join(lines), "reading") == GROUP_MAJOR
+    plain = "| a | b |\n|---|---|\n| 1 | 2 |"
+    assert N.regroup_tables(plain) == plain
+
+
+def test_colspan_and_rowspan_keep_columns_aligned():
+    """A rowspan in the left group must not shift the right group's cells into it."""
+    table = ("<table><tr><th></th><th>Pl.</th><th></th><th>Pl.</th></tr>"
+             "<tr><td rowspan=\"2\">a</td><td>1</td><td>c</td><td>3</td></tr>"
+             "<tr><td>2</td><td>d</td><td>4</td></tr></table>")
+    assert N.norm(table, "reading") == "pl. pl. a 1 2 c 3 d 4"
+    titled = _html(["Index"], *TWO_COLUMN_INDEX).replace("<td>Index</td>", "<td colspan=\"6\">Index</td>")
+    assert N.regroup_tables(titled) == titled   # a title row is the first row: no repeat, unchanged
+
+
+def test_caption_and_nested_tables_are_left_alone():
+    captioned = _html(*TWO_COLUMN_INDEX).replace("<table>", "<table><caption>Bulimus</caption>")
+    assert N.regroup_tables(captioned) == captioned
+    nested = _html(*TWO_COLUMN_INDEX).replace("<td>LIX.</td>", "<td><table><tr><td>LIX.</td></tr></table></td>")
+    assert N.norm(nested, "reading") == N.norm(N.strip_markup(nested), "reading")
+
+
+def test_regrouping_only_reorders_cells_never_rewrites_them():
+    """Entities, inner tags and unknown angle-bracket text pass through raw, so the fixed markup strip
+    treats each cell exactly as before. Token recall is order-free, so it is unchanged."""
+    import scorer as S
+    rows = [row[:] for row in TWO_COLUMN_INDEX]
+    rows[1][0], rows[2][3] = "abbreviatus, <i>D&#x27;Orb.</i>", "aureus, <Hand>"
+    table = _html(*rows)
+    regrouped = N.regroup_tables(table)
+    assert "D&#x27;Orb." in regrouped and "<Hand>" in regrouped and "<i>" in regrouped
+    assert sorted(N.tokens(regrouped)) == sorted(N.tokens(N.strip_markup(table)))
+    gt = "Plate. Species. abbreviatus LIX. 399 Abyssinicus XLVI. 296 auratus LI. 335 aureus XXIX. 187"
+    assert S.score_page(gt, table)["recall"] == S.score_page(gt, N.strip_markup(table))["recall"]
+
+
+@settings(max_examples=200, deadline=None)
+@given(s=st.text(alphabet=GLYPHS + "<>/|-\n", max_size=60))
+def test_text_without_a_regroupable_table_is_untouched(s):
+    """The regression guard: text with no repeated-header table reaches the markup strip unchanged,
+    so every such page scores exactly as under the previous norm."""
+    assert N.regroup_tables(s) == s

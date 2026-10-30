@@ -25,10 +25,16 @@ silently change a past number.
 import re
 import unicodedata
 from dataclasses import dataclass
+from html.parser import HTMLParser
 
 import jiwer
 
 # Bump these to re-score from cached raw outputs (the "run once, re-score forever" property).
+# 2026-10-30a: the reading lane reads a table whose header labels repeat (an index printed in two or
+# three columns, emitted as one table: [ , Plate, Species, , Plate, Species]) one column group at a
+# time, top to bottom, instead of row by row. Every other table, and all non-table text, is unchanged.
+# This intentionally changes reading-lane CER on those pages. Token recall is order-free; it moves only
+# where the old row-by-row strip had joined a hyphen-ended cell onto the next row's first cell.
 # 2026-07-20a: the HTML/XML strip matches real tag shapes from a fixed tag vocabulary instead of any
 # short `<...>` pair, so angle-bracketed GT prose (e.g. the historical German `<Gelenkknöchelchen>`)
 # is transcribed content again rather than deleted from the reading lane; and the reading lane drops
@@ -38,7 +44,7 @@ import jiwer
 # transcription survives. This intentionally changes reading-lane scores.
 # Earlier U+FFFD fixes keep illegible-bearing words intact and exclude wildcard positions from both
 # errors and the reference denominator.
-NORM_VERSION = "2026-07-20a"
+NORM_VERSION = "2026-10-30a"
 GRAPHEME_MODE = "codepoint"  # not grapheme-cluster; Latin-NFC gap is tiny — see DESIGN.md
 
 REPLACEMENT = "�"  # GT illegible marker → scoring wildcard (matches any OCR char, never an error)
@@ -86,6 +92,168 @@ def strip_markup(t: str | None) -> str:
     return t
 
 
+# --- repeated-header index tables (reading lane only) ---
+# A multi-column printed index ("name …… Plate. Species." twice across the page) is often emitted
+# as ONE table whose header repeats: [ , Plate, Species, , Plate, Species]. Stripping its tags reads
+# it row by row, which interleaves two printed columns; the GT reads one printed column top to
+# bottom, then the next. When the header's non-empty labels repeat r times, the table is read as r
+# equal-width column groups, each group top to bottom. Every other table is left exactly as it was
+# (row-major after the tag strip): no header repeat, a width that does not divide by r, a headerless
+# grid, text outside the cells, or a nested table. Only the ORDER of cells changes — cell text is
+# passed through raw (tags, entities and all) so the strip below treats it as it always did.
+_HTML_TABLE = re.compile(r"<table\b[^>]*>.*?</table\s*>", re.S | re.I)
+_PIPE_SEPARATOR = re.compile(r":?-{2,}:?")
+_LABEL_NOISE = re.compile(r"[\W_]+")
+
+
+class _TableGrid(HTMLParser):
+    """Rows of raw cell text for one HTML table; colspan/rowspan expand to empty cells so column
+    positions line up. `ok` turns False on anything the regrouping should not touch."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.rows: list[list[str]] = []
+        self.ok = True
+        self._cell: list[str] | None = None   # raw pieces of the open cell
+        self._at = 0                           # its column in the current row
+        self._spanned: set[tuple[int, int]] = set()
+        self._depth = 0
+
+    @staticmethod
+    def _span(attrs, name):
+        digits = re.search(r"\d+", dict(attrs).get(name) or "")
+        return max(1, min(int(digits.group(0)), 50)) if digits else 1
+
+    def _commit(self):
+        """Close the open cell. Also called on an implied close (`<td>a<td>b`, a missing `</td>`)."""
+        if self._cell is not None:
+            self.rows[-1][self._at] = "".join(self._cell)
+            self._cell = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "table":
+            self._depth += 1
+            self.ok = self.ok and self._depth == 1   # nested table: leave the whole thing alone
+        elif tag == "tr":
+            self._commit()
+            self.rows.append([])
+        elif tag in ("td", "th"):
+            self._commit()
+            if not self.rows:
+                self.rows.append([])
+            row = self.rows[-1]
+            while (len(self.rows) - 1, len(row)) in self._spanned:
+                row.append("")
+            r, c = len(self.rows) - 1, len(row)
+            colspan, rowspan = self._span(attrs, "colspan"), self._span(attrs, "rowspan")
+            self._at = c
+            row.extend([""] * colspan)
+            self._spanned.update((r + dr, c + dc) for dr in range(1, rowspan) for dc in range(colspan))
+            self._cell = []
+        elif self._cell is not None:
+            self._cell.append(self.get_starttag_text() or "")
+
+    def handle_endtag(self, tag):
+        if tag in ("td", "th", "tr"):
+            self._commit()
+        elif tag == "table":
+            self._commit()
+            self._depth -= 1
+        elif self._cell is not None and tag not in ("tbody", "thead", "tfoot"):
+            self._cell.append(f"</{tag}>")
+
+    def _text(self, text):
+        if self._cell is not None:
+            self._cell.append(text)
+        elif text.strip():
+            self.ok = False   # caption or stray text: regrouping would move or drop it
+
+    def handle_data(self, data):
+        self._text(data)
+
+    def handle_entityref(self, name):
+        self._text(f"&{name};")
+
+    def handle_charref(self, name):
+        self._text(f"&#{name};")
+
+    def handle_comment(self, data):
+        self._text(f"<!--{data}-->")
+
+
+def _html_grid(html: str) -> list[list[str]] | None:
+    parser = _TableGrid()
+    parser.feed(html)
+    parser.close()
+    parser._commit()
+    return parser.rows if parser.ok and parser._depth == 0 else None
+
+
+def _header_repeats(header: list[str]) -> int | None:
+    """How many times the header's non-empty labels repeat (case/punctuation-insensitive), or None.
+    `["", "Plate.", "Species.", "Plate", "species"]` -> 2; `["Vol. page"] * 3` -> 3."""
+    labels = [_LABEL_NOISE.sub(" ", strip_markup(h)).strip().casefold() for h in header]
+    labels = [label for label in labels if label]
+    n = len(labels)
+    for period in range(1, n // 2 + 1):
+        if n % period == 0 and all(labels[i] == labels[i % period] for i in range(n)) \
+                and any(ch.isalpha() for label in labels[:period] for ch in label):
+            return n // period
+    return None
+
+
+def _group_major(grid: list[list[str]]) -> str | None:
+    """The regrouped reading of a table, or None to leave it as it is."""
+    if len(grid) < 2:
+        return None
+    repeats = _header_repeats(grid[0])
+    width = max(len(row) for row in grid[1:])
+    if not repeats or width == 0 or width % repeats:
+        return None
+    step = width // repeats
+    parts = [" ".join(c for c in grid[0] if c.strip())]
+    for start in range(0, width, step):
+        for row in grid[1:]:
+            parts.extend(c for c in row[start:start + step] if c.strip())
+    # Space-joined, never newline-joined: the regrouping must not invent a line-end de-hyphenation.
+    return " " + " ".join(parts) + " "
+
+
+def _pipe_tables(text: str) -> str:
+    """Regroup markdown pipe tables (2+ consecutive lines starting with `|`)."""
+    lines, out, i = text.split("\n"), [], 0
+    while i < len(lines):
+        j = i
+        while j < len(lines) and lines[j].lstrip().startswith("|"):
+            j += 1
+        if j - i < 2:
+            out.append(lines[i])
+            i += 1
+            continue
+        grid = []
+        for line in lines[i:j]:
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if not all(_PIPE_SEPARATOR.fullmatch(c or "--") for c in cells):
+                grid.append(cells)
+        regrouped = _group_major(grid)
+        out.extend([regrouped] if regrouped is not None else lines[i:j])
+        i = j
+    return "\n".join(out)
+
+
+def regroup_tables(t: str) -> str:
+    """Read repeated-header index tables group by group; leave every other table unchanged."""
+    if "<table" not in t.lower() and "|" not in t:
+        return t
+
+    def html(match):
+        grid = _html_grid(match.group(0))
+        regrouped = _group_major(grid) if grid is not None else None
+        return regrouped if regrouped is not None else match.group(0)
+
+    return _pipe_tables(_HTML_TABLE.sub(html, t))
+
+
 def _diplomatic(t):
     # NFC, case-sensitive, keep everything historical (ſ, ﬁ, diacritics). Whitespace only.
     return _WS.sub(" ", unicodedata.normalize("NFC", t or "")).strip()
@@ -95,7 +263,7 @@ def _reading(t):
     # NFKC folds ligatures/long-s/width variants; case-fold; unify quotes+hyphens; de-hyphenate.
     # Invisible formatting codepoints are dropped BEFORE de-hyphenation so a soft hyphen cannot
     # survive as a word-splitting artifact (NFKC does not remove them).
-    t = strip_markup(t or "")
+    t = strip_markup(regroup_tables(t or ""))
     t = unicodedata.normalize("NFKC", t).translate(_INVISIBLE).translate(_QUOTES).translate(_HYPHENS)
     t = _DEHYPH.sub("", t).casefold()
     return _WS.sub(" ", t).strip()
@@ -233,7 +401,8 @@ def provenance() -> dict:
         # produced a scorecard's raw supports is recorded, not just the wrapper's version.
         "rapidfuzz_version": importlib.metadata.version("rapidfuzz"),
         "lanes": {"diplomatic": "NFC, case-sensitive, keep long-s/ligatures/diacritics",
-                  "reading": "NFKC, case-fold, unify quotes+hyphens, de-hyphenate, strip fixed markup"},
+                  "reading": "NFKC, case-fold, unify quotes+hyphens, de-hyphenate, strip fixed markup, "
+                              "read repeated-header tables group by group"},
         "grapheme_mode": GRAPHEME_MODE,
         "word_boundary": "whitespace split, punctuation dropped for token axes",
         "illegible_marker": "U+FFFD = wildcard (matches any OCR char, excluded from error + length)",
