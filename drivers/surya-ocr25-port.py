@@ -51,15 +51,16 @@ Two things differ from a plain `surya_ocr` run, and neither changes what the mod
      package's expected model name, so the package attaches unchanged and the row names its
      bytes.
 
-One setting is not the package default, and it follows Datalab's own benchmark harness:
-SURYA_FULLPAGE_REGEN is ON. surya/settings.py calls it "opt-in for benchmarking", and Datalab's
-omni_parse_bench adapter for this checkpoint (harness/providers/serve/surya-ocr-2.5, commit
-735b646) sets it, with the same vLLM image digest, the same launcher flags and the same model
-revision as this driver. With it, a full-page output that loops or does not parse is asked
-again at rising temperature (up to 6 rounds) before the block-mode fallback.
-`--no-fullpage-regen` runs the package default instead, as a diagnostic.
+Datalab's own benchmark harness (omni_parse_bench, harness/providers/serve/surya-ocr-2.5, commit
+735b646) runs this checkpoint the same way: the same vLLM image digest, launcher flags, model
+revision and `full_page=True` call. It differs in one setting: it turns on SURYA_FULLPAGE_REGEN,
+which surya/settings.py calls "opt-in for benchmarking" (a full-page output that loops or does
+not parse is asked again at rising temperature before the block-mode fallback). The board row
+keeps the package default (off), because no other row gets a benchmark-only retry.
+`--fullpage-regen` runs the harness setting as a diagnostic. On the full benchmark it fired on
+no page: no page needed a second full-page round.
 
-Every other setting is the package default (surya-ocr 0.23.0, surya/settings.py): image size
+Every setting is the package default (surya-ocr 0.23.0, surya/settings.py): image size
 capped by `scale_to_fit` at 3072x2048 px, 12288 full-page tokens, temperature 0 with the
 client's own repeat-retry, guided layout JSON ON. The board pages are images, not PDFs, so the
 package's DPI settings never apply; Datalab's harness also opens an image file as it is.
@@ -117,8 +118,8 @@ START = time.time()
 #   auto rule leaves speculation off.
 # - client_parallel: the package's auto value, min(max_num_seqs, MAX_AUTO_PARALLEL=96). Pages
 #   are submitted one per call from this many threads; each call is the package's own path.
-# - fullpage_regen: ON, as Datalab's omni_parse_bench harness runs this checkpoint (see the
-#   docstring). The package default is off; `--no-fullpage-regen` gives that as a diagnostic.
+# - fullpage_regen: the package default (off). Datalab's omni_parse_bench harness turns it on;
+#   `--fullpage-regen` gives that as a diagnostic (see the docstring).
 # - mode / max_tokens_full_page / guided_layout: package defaults, stated.
 SERVING = {
     "model": "datalab-to/surya-ocr-2.5",
@@ -138,7 +139,7 @@ SERVING = {
     ],
     "client_parallel": 96,
     "mode": "full_page (RecognitionPredictor(..., full_page=True), as the surya_ocr CLI)",
-    "fullpage_regen": True,
+    "fullpage_regen": False,
     "max_tokens_full_page": 12288,
     "guided_layout": True,
     "image_preprocessing": "convert('RGB'), as surya.input.load.load_image; scale_to_fit in the client",
@@ -409,8 +410,9 @@ def main():
                     help="smoke-test against N pages. NOT a publishable run.")
     ap.add_argument("--shard", type=parse_shard, default=(0, 1), metavar="RANK/WORLD",
                     help="strided fan-out across jobs, e.g. 2/4 (default: 0/1)")
-    ap.add_argument("--no-fullpage-regen", action="store_true",
-                    help="package default (regeneration off). A diagnostic, not the board row.")
+    ap.add_argument("--fullpage-regen", action="store_true",
+                    help="Datalab's benchmark-harness setting (regeneration on). A diagnostic, "
+                         "not the board row.")
     ap.add_argument("--retry-errors", action="store_true",
                     help="re-read pages whose only rows are error rows")
     args = ap.parse_args()
@@ -420,11 +422,10 @@ def main():
     os.environ["SURYA_INFERENCE_BACKEND"] = "vllm"
     os.environ["VLLM_GPU_TYPE"] = SERVING["vllm_gpu_type"]
     os.environ.setdefault("DISABLE_TQDM", "true")
-    regen = not args.no_fullpage_regen
-    os.environ["SURYA_FULLPAGE_REGEN"] = "true" if regen else "false"
-    if not regen:
-        SERVING["fullpage_regen"] = False
-        log("NOTE: --no-fullpage-regen: package default, a diagnostic run, not the board row")
+    os.environ["SURYA_FULLPAGE_REGEN"] = "true" if args.fullpage_regen else "false"
+    if args.fullpage_regen:
+        SERVING["fullpage_regen"] = True
+        log("NOTE: --fullpage-regen: Datalab's harness setting, a diagnostic run, not the board row")
 
     from datasets import load_dataset
 
