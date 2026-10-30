@@ -51,10 +51,18 @@ Two things differ from a plain `surya_ocr` run, and neither changes what the mod
      package's expected model name, so the package attaches unchanged and the row names its
      bytes.
 
+One setting is not the package default, and it follows Datalab's own benchmark harness:
+SURYA_FULLPAGE_REGEN is ON. surya/settings.py calls it "opt-in for benchmarking", and Datalab's
+omni_parse_bench adapter for this checkpoint (harness/providers/serve/surya-ocr-2.5, commit
+735b646) sets it, with the same vLLM image digest, the same launcher flags and the same model
+revision as this driver. With it, a full-page output that loops or does not parse is asked
+again at rising temperature (up to 6 rounds) before the block-mode fallback.
+`--no-fullpage-regen` runs the package default instead, as a diagnostic.
+
 Every other setting is the package default (surya-ocr 0.23.0, surya/settings.py): image size
 capped by `scale_to_fit` at 3072x2048 px, 12288 full-page tokens, temperature 0 with the
-client's own repeat-retry, progressive-temperature regeneration OFF, guided layout JSON ON. The
-board pages are images, not PDFs, so the package's DPI settings never apply.
+client's own repeat-retry, guided layout JSON ON. The board pages are images, not PDFs, so the
+package's DPI settings never apply; Datalab's harness also opens an image file as it is.
 
 WHAT IS STORED
 
@@ -65,6 +73,7 @@ package's `generate`:
 
   fullpage_raw / fullpage_finish_reason / fullpage_tokens
       the model's verbatim full-page completion, before the package parses it
+  fullpage_rounds   full-page requests made (more than 1 when regeneration re-asked)
   fallback          the package re-read the page in block mode
   n_capped_blocks   block-mode requests cut by their token cap
   n_failed_blocks   block-mode requests that failed after the client's retries
@@ -108,7 +117,9 @@ START = time.time()
 #   auto rule leaves speculation off.
 # - client_parallel: the package's auto value, min(max_num_seqs, MAX_AUTO_PARALLEL=96). Pages
 #   are submitted one per call from this many threads; each call is the package's own path.
-# - mode / fullpage_regen / max_tokens_full_page / guided_layout: package defaults, stated.
+# - fullpage_regen: ON, as Datalab's omni_parse_bench harness runs this checkpoint (see the
+#   docstring). The package default is off; `--no-fullpage-regen` gives that as a diagnostic.
+# - mode / max_tokens_full_page / guided_layout: package defaults, stated.
 SERVING = {
     "model": "datalab-to/surya-ocr-2.5",
     "model_revision": "00c843e9cae45611dca0a6dc2c9bbbf2dadaaed3",
@@ -127,7 +138,7 @@ SERVING = {
     ],
     "client_parallel": 96,
     "mode": "full_page (RecognitionPredictor(..., full_page=True), as the surya_ocr CLI)",
-    "fullpage_regen": False,
+    "fullpage_regen": True,
     "max_tokens_full_page": 12288,
     "guided_layout": True,
     "image_preprocessing": "convert('RGB'), as surya.input.load.load_image; scale_to_fit in the client",
@@ -293,6 +304,7 @@ def read_page(predictor, image) -> dict:
     secs = time.time() - t0
 
     full = [c for c in calls if c["prompt_type"] == str(PROMPT_TYPE_HIGH_ACCURACY_BBOX)]
+    # With regeneration on, a page can take several full-page rounds; `fullpage_*` is round 0.
     other = [c for c in calls if c["prompt_type"] != str(PROMPT_TYPE_HIGH_ACCURACY_BBOX)]
     first = full[0] if full else {}
     blocks = [{"label": b.label, "raw_label": b.raw_label, "reading_order": b.reading_order,
@@ -310,6 +322,7 @@ def read_page(predictor, image) -> dict:
         "fullpage_raw": first.get("raw"),
         "fullpage_finish_reason": first.get("finish_reason"),
         "fullpage_tokens": first.get("tokens"),
+        "fullpage_rounds": len(full),
         "fallback": bool(other),
         "n_requests": len(calls),
         "n_blocks": len(blocks),
@@ -396,6 +409,8 @@ def main():
                     help="smoke-test against N pages. NOT a publishable run.")
     ap.add_argument("--shard", type=parse_shard, default=(0, 1), metavar="RANK/WORLD",
                     help="strided fan-out across jobs, e.g. 2/4 (default: 0/1)")
+    ap.add_argument("--no-fullpage-regen", action="store_true",
+                    help="package default (regeneration off). A diagnostic, not the board row.")
     ap.add_argument("--retry-errors", action="store_true",
                     help="re-read pages whose only rows are error rows")
     args = ap.parse_args()
@@ -405,6 +420,11 @@ def main():
     os.environ["SURYA_INFERENCE_BACKEND"] = "vllm"
     os.environ["VLLM_GPU_TYPE"] = SERVING["vllm_gpu_type"]
     os.environ.setdefault("DISABLE_TQDM", "true")
+    regen = not args.no_fullpage_regen
+    os.environ["SURYA_FULLPAGE_REGEN"] = "true" if regen else "false"
+    if not regen:
+        SERVING["fullpage_regen"] = False
+        log("NOTE: --no-fullpage-regen: package default, a diagnostic run, not the board row")
 
     from datasets import load_dataset
 
@@ -439,6 +459,7 @@ def main():
             nonlocal rows, written, part_index
             record = future.result()
             record["model"] = SERVING["model"]
+            record["fullpage_regen"] = SERVING["fullpage_regen"]
             if record.get("error"):
                 counts["errors"] += 1
             if record.get("finish_reason") == "length":
