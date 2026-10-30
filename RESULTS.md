@@ -430,9 +430,13 @@ Every row's exact image is pinned in its provenance file (`job.docker_image` in
 
 ## Where the numbers come from
 
-Every scorecard traces to cached raw model output (the run bucket, `hf://buckets/finebooks/bhl-ocr-runs/full-2026-08/`)
-plus a pinned ground-truth revision, so any score can be reproduced without re-running inference: consolidation
-(`runners/consolidate_run.py`) → versioned post-processing (`runners/normalize_outputs.py`) →
+Every scorecard traces to cached raw model output plus a pinned ground-truth revision. The raw
+output, the scored text and the per-page scorecard of every row are public in
+[`hf://buckets/finebooks/bhl-ocr-outputs`](https://huggingface.co/buckets/finebooks/bhl-ocr-outputs),
+one folder per row, with a `manifest.json` giving each row's model revision, job ids, driver
+commit, versions and licence (OXR-1.0's outputs are not included; the Datalab rows carry Datalab's
+licence in their folders). From that cache any score can be reproduced without re-running
+inference: consolidation (`runners/consolidate_run.py`) → versioned post-processing (`runners/normalize_outputs.py`) →
 one scoring pass (`runners/score_dataset.py`) → one report (`runners/leaderboard.py`), written
 into the board page by `scripts/bake_leaderboard.py`. The ground truth is the IMPACT-BHL expert
 transcription set, CC-BY, credited to the IMPACT Centre of Competence / BHL-Europe — see the
