@@ -27,12 +27,12 @@ which excludes the page from that row's aggregates and is counted in the Loop % 
 | 3 | **datalab-to/chandra-ocr-2** (new) | 0.0285 | [0.0198, 0.0380] | 0.0256 | 3.14 | 0.9810 | 0.09 |
 | 4 | ATH-MaaS/OvisOCR2 | 0.0305 | [0.0232, 0.0357] | 0.0280 | 2.79 | 0.9614 | 2.54 |
 | 5 | **lightonai/LightOnOCR-3-4B** (new) | 0.0312 | [0.0238, 0.0404] | 0.0290 | 2.28 | 0.9711 | 0.42 |
-| 6 | **baidu/Unlimited-OCR-2** (new) | 0.0329 | [0.0258, 0.0417] | 0.0311 | 1.90 | 0.9675 | 0.14 |
-| 7 | kraken/PP-OCRv6-medium | 0.0338 | [0.0237, 0.0442] | 0.0316 | 2.34 | 0.9760 | 0.00 |
-| 8 | **openbmb/MiniCPM-OCR-1.0** (new) | 0.0368 | [0.0151, 0.0542] | 0.0347 | 2.29 | 0.9634 | 0.00 |
-| 9 | **ATH-MaaS/OvisOCR3** (new) | 0.0382 | [0.0283, 0.0481] | 0.0284 | 10.38 | 0.9650 | 0.46 |
-| 10 | PaddlePaddle/PaddleOCR-VL-1.6 | 0.0392 | [0.0259, 0.0499] | 0.0367 | 2.69 | 0.9415 | 6.47 |
-| 11 | allenai/olmOCR-2-7B-1025-FP8 | 0.0432 | [0.0199, 0.0694] | 0.0302 | 13.64 | 0.9573 | 0.55 |
+| 6 | allenai/olmOCR-2-7B-1025-FP8 | 0.0321 | [0.0151, 0.0510] | 0.0302 | 1.96 | 0.9573 | 0.55 |
+| 7 | **baidu/Unlimited-OCR-2** (new) | 0.0329 | [0.0258, 0.0417] | 0.0311 | 1.90 | 0.9675 | 0.14 |
+| 8 | kraken/PP-OCRv6-medium | 0.0338 | [0.0237, 0.0442] | 0.0316 | 2.34 | 0.9760 | 0.00 |
+| 9 | **openbmb/MiniCPM-OCR-1.0** (new) | 0.0368 | [0.0151, 0.0542] | 0.0347 | 2.29 | 0.9634 | 0.00 |
+| 10 | **ATH-MaaS/OvisOCR3** (new) | 0.0382 | [0.0283, 0.0481] | 0.0284 | 10.38 | 0.9650 | 0.46 |
+| 11 | PaddlePaddle/PaddleOCR-VL-1.6 | 0.0392 | [0.0259, 0.0499] | 0.0367 | 2.69 | 0.9415 | 6.47 |
 | 12 | **datalab-to/surya-ocr-2.5** (new) | 0.0432 | [0.0349, 0.0509] | 0.0408 | 2.62 | 0.9672 | 0.00 |
 | 13 | **lightonai/LightOnOCR-3-0.8B** (new) | 0.0455 | [0.0308, 0.0571] | 0.0429 | 2.80 | 0.9659 | 0.88 |
 | 14 | lightonai/LightOnOCR-2-1B | 0.0489 | [0.0269, 0.0706] | 0.0351 | 15.79 | 0.9688 | 2.08 |
@@ -82,7 +82,7 @@ accompanying blog post rather than here.
 
 `kraken/PP-OCRv6-medium` is the first row that is not a single end-to-end model: kraken's bundled
 `blla` segmenter finds the text lines and orders them, then a 15.9M-parameter CTC recogniser
-transcribes each one. It ranks 7th on the headline (4th when it was added in September), with a
+transcribes each one. It ranks 8th on the headline (4th when it was added in September), with a
 confidence interval overlapping most of the top ten. Three things about it are worth more than the rank.
 
 **It wins the diplomatic lane outright.** CER diplomatic 0.0405, against 0.0503 for the next best
@@ -221,7 +221,7 @@ coordinate and class tokens scores slightly worse. Weights and plugin: OpenMDW-1
 Both rows use the same pinned benchmark, norm, scorer and post-processing version as the rest of
 the board. Combining all 23 scorecards leaves every earlier row's numbers unchanged.
 
-**ATH-MaaS/OvisOCR3 (7th when added, 9th now; 0.0382).** The 0.8B successor to OvisOCR2, run with the card's
+**ATH-MaaS/OvisOCR3 (7th when added, 10th now; 0.0382).** The 0.8B successor to OvisOCR2, run with the card's
 `document_markdown` prompt, which is OvisOCR2's prompt word for word. On content pages the two are
 level (0.0284 against 0.0280). The whole gap is on sparse/blank pages (10.38 against 2.79): on 111
 of the 428, mostly Conchologia plates (70) and Birds plates (39), it writes a note about the page
@@ -265,7 +265,7 @@ Same pinned benchmark, norm, scorer and post-processing version as the rest of t
 Combining all 24 scorecards leaves every earlier row's numbers unchanged. Provenance:
 `data/full-2026-08/provenance/unlimited-ocr2.json`.
 
-**baidu/Unlimited-OCR-2 (6th, 0.0329).** The successor to Unlimited-OCR (15th when this row was
+**baidu/Unlimited-OCR-2 (6th when added, 7th now; 0.0329).** The successor to Unlimited-OCR (15th when this row was
 added, 18th now; 0.0604), released the same day, and the largest version-to-version gain on the
 board: the headline error falls by almost half and every volume improves. Conchologia drops from
 0.091 to 0.028 and the Latin volume from 0.185 to 0.118, still the hardest volume for this row, as
@@ -309,7 +309,7 @@ Same pinned benchmark, norm, scorer and post-processing version as the rest of t
 Combining all 25 scorecards leaves every earlier row's numbers unchanged. Provenance:
 `data/full-2026-08/provenance/minicpm-ocr.json`.
 
-**openbmb/MiniCPM-OCR-1.0 (8th, 0.0368).** A pipeline, like OXR-1.0 and kraken: OpenBMB's
+**openbmb/MiniCPM-OCR-1.0 (8th when added, 9th now; 0.0368).** A pipeline, like OXR-1.0 and kraken: OpenBMB's
 `minicpm-ocr` SDK finds regions with PP-DocLayoutV3, a 1.3B model reads each region with a
 prompt for its type (text, table, formula), and the SDK joins the results in reading order.
 Its median page CER (0.0059) is the fifth-lowest on the board, close to chandra-ocr-2 and
@@ -348,8 +348,8 @@ Combining all 26 scorecards leaves every earlier row's numbers unchanged. Proven
 **datalab-to/surya-ocr-2.5 (12th, 0.0432).** A 689M VLM that does layout and OCR in one pass,
 run through Datalab's `surya-ocr` package (0.23.0) exactly as its `surya_ocr` command runs it:
 one full-page request per page, the package's parser and blank-region filter, and its block-mode
-fallback when a full-page answer fails. It ties olmOCR-2 on the headline (0.0432) with a much
-narrower CI, which overlaps every row except dots.ocr, dots.mocr and Falcon-OCR. Median page CER 0.0181. No loops and
+fallback when a full-page answer fails. It tied olmOCR-2 on the headline when added (0.0432; olmOCR-2 is 0.0321 since the
+front-matter fix below), with a much narrower CI, which overlaps every row except dots.ocr, dots.mocr and Falcon-OCR. Median page CER 0.0181. No loops and
 no errors: the package never keeps a capped full-page answer, and only one page fell back to
 block mode. On sparse/blank pages it scores 2.62, with the recent specialists; 347 of the 428
 come back empty. One blank Cuvier leaf comes back as a paragraph of invented pseudo-German.
@@ -376,6 +376,18 @@ package normally starts vLLM in Docker; on Jobs the driver starts the same image
 sets, serves the checkpoint at a pinned commit, and lets the package attach to it. 2,165 pages
 took 27 minutes on one A100 80 GB. Weights: modified OpenRAIL-M (free for research, personal use
 and startups under $5M; outputs carry the same licence).
+
+## Fix: olmOCR-2 blank pages (2026-10-30)
+
+olmOCR-2 is prompted to start every answer with a YAML front matter (language, rotation, table and
+diagram flags). On a blank page it answers with the front matter alone. The post-processing rule
+that drops the front matter required a line after the closing `---`, so on those 342 pages, all in
+the sparse/blank stratum, the YAML itself was scored as the page's transcription. Those pages now
+score as empty output. olmOCR-2 moves from 0.0432 (11th) to 0.0321 (6th); its sparse/blank CER
+from 13.64 to 1.96. Content pages, recall and every other row are unchanged. The CI
+[0.0151, 0.0510] stays wide and overlaps every row except Falcon-OCR. The fix changes one rule that
+only this row uses, so it is made without a post-processing version bump, as for Falcon-OCR's
+token strip; only olmOCR-2 was re-normalized and re-scored.
 
 ## Caveats
 

@@ -197,7 +197,8 @@ def qianfan_strip_thinking(text: str) -> str:
 
 # olmOCR-2 is prompted to emit a YAML front-matter header (primary_language, is_rotation_valid,
 # rotation_correction, is_table, is_diagram) above the transcription.
-FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)$", re.DOTALL)
+# The body is optional: on a blank page the model answers with the front matter alone.
+FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*(?:\n(.*))?$", re.DOTALL)
 
 
 def drop_front_matter(text: str) -> str:
@@ -212,9 +213,16 @@ def drop_front_matter(text: str) -> str:
     that is what the driver did, and a stray trailing newline is not worth a behaviour change. The
     parsed YAML itself is not this runner's business — the driver keeps it in its own
     `markdown_metadata` column.
+
+    A page whose output is the front matter ALONE (no line after the closing `---`, which is how
+    olmOCR-2 answers a blank page) has an empty body. The driver's pattern required a newline
+    after the closing fence, so those pages fell through unchanged and their YAML was scored as
+    transcription — 342 sparse/blank pages on the full run. Fixed without a POSTPROC_VERSION bump,
+    following tiiuae/Falcon-OCR: this transform belongs to olmOCR-2 alone, so only that row's
+    normalized text changes, and the row is re-normalized and re-scored with the fix.
     """
     m = FRONT_MATTER_RE.match(text)
-    return m.group(2) if m else text
+    return (m.group(2) or "") if m else text
 
 
 # skip_special_tokens=False (needed so Unlimited-OCR's grounding tags survive detokenization) also
