@@ -581,6 +581,9 @@ def surya_blocks_to_markdown(raw: str) -> str:
     default belongs to chandra's own `parse_markdown`, not to surya. Figures are dropped either
     way: the package does not read Image/Figure/Diagram blocks (their HTML is "").
 
+    Bare-text blocks (no tags) are wrapped in <p>, as the chandra converter does for Text blocks,
+    so neighbouring headers stay separate words.
+
     A block the package flagged as an error keeps its HTML: a capped block's partial text is
     what the package returns, and consolidate_run has already sealed such pages as truncated.
     Malformed JSON raises, so a broken row is an error row, not a blank page.
@@ -594,7 +597,13 @@ def surya_blocks_to_markdown(raw: str) -> str:
         if block["skipped"] or not block["html"]:
             continue
         label = _html.escape(block["raw_label"] or block["label"], quote=True)
-        divs.append(f'<div data-label="{label}">{block["html"]}</div>')
+        body = block["html"]
+        if not re.search("<.+>", body.strip()):
+            # Page headers and footers often come back as bare text ("204", "APPENDIX"). The
+            # chandra converter wraps bare text in <p> for Text blocks only, so two bare
+            # headers would run together as "204APPENDIX". Wrap every bare block the same way.
+            body = f"<p>{body.strip()}</p>"
+        divs.append(f'<div data-label="{label}">{body}</div>')
     if not divs:
         return ""
     return chandra_html_to_markdown("".join(divs), include_headers_footers=True)

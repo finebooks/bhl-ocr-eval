@@ -266,6 +266,14 @@ def test_surya_blocks_keep_headers_and_drop_unread_figures():
     assert NO.surya_blocks_to_markdown(raw) == "RUNNING HEAD\n\nBody text.\n\n12"
 
 
+def test_surya_bare_text_headers_stay_separate():
+    import json
+
+    raw = json.dumps([_surya_block(0, "Page-Header", "204"), _surya_block(1, "Page-Header", "APPENDIX"),
+                      _surya_block(2, "Text", "<p>Body.</p>")])
+    assert NO.surya_blocks_to_markdown(raw) == "204\n\nAPPENDIX\n\nBody."
+
+
 def test_surya_blocks_empty_page_is_empty_not_an_error():
     assert NO.surya_blocks_to_markdown("[]") == ""
 
