@@ -395,7 +395,7 @@ def smoldocling_doctags_to_markdown(text: str, image=None) -> str:
     return doctags_to_markdown(text, image)
 
 
-def chandra_html_to_markdown(text: str) -> str:
+def chandra_html_to_markdown(text: str, *, include_headers_footers: bool = False) -> str:
     """Chandra's HTML layout blocks -> markdown (datalab-to/chandra-ocr-2).
 
     chandra-ocr-2 answers the `ocr_layout` prompt with HTML `<div data-bbox data-label>` blocks.
@@ -408,8 +408,9 @@ def chandra_html_to_markdown(text: str) -> str:
       a placeholder `<img src="<md5>_<n>_img.webp">` into them, which markdownify turns into a
       `![...](<hash>.webp)` link: invented characters on every plate page, plus the model's
       alt-text DESCRIPTION of the figure, which is not page text either.
-    - include_headers_footers=False is the vendor default and is kept: Page-Header/Page-Footer
-      blocks are dropped (the board's furniture column records this policy).
+    - include_headers_footers=False is the vendor default and is kept for chandra: Page-Header/
+      Page-Footer blocks are dropped (the board's furniture column records this policy). The
+      keyword exists for surya_blocks_to_markdown, which keeps them (see there).
     The vendor wraps the conversion in a try/except that returns "" on failure; here a failure
     RAISES, so it becomes an error row instead of a silent blank scored as an unread page.
     """
@@ -549,7 +550,7 @@ def chandra_html_to_markdown(text: str) -> str:
 
     # parse_markdown(html, include_headers_footers=False, include_images=False), verbatim
     # converter options, minus the try/except (see above).
-    html = parse_html(text, False, False)
+    html = parse_html(text, include_headers_footers, False)
     md_cls = Markdownify(
         heading_style="ATX",
         bullets="-",
@@ -563,6 +564,40 @@ def chandra_html_to_markdown(text: str) -> str:
         block_math_delimiters=("$$", "$$"),
     )
     return md_cls.convert(html).strip()
+
+
+def surya_blocks_to_markdown(raw: str) -> str:
+    """The surya-ocr package's page blocks -> markdown (datalab-to/surya-ocr-2.5).
+
+    `raw` is the package's page result as JSON (drivers/surya-ocr25-port.py): blocks in reading
+    order, each with the model's raw label (`Text`, `Page-Header`, `Image`, ...) and its HTML.
+    The package has no markdown renderer of its own, so each block is put back in the
+    `<div data-label=...>` shape Datalab's chandra-ocr-2 writes, and the chandra converter does
+    the HTML -> markdown step (same vendor, same label set, same HTML conventions).
+
+    One difference from the chandra row, and it is a decision about the scored text: page
+    headers and footers are KEPT. The surya package returns them as ordinary blocks with text;
+    nothing in the package drops them. Chandra's converter drops them by default, and that
+    default belongs to chandra's own `parse_markdown`, not to surya. Figures are dropped either
+    way: the package does not read Image/Figure/Diagram blocks (their HTML is "").
+
+    A block the package flagged as an error keeps its HTML: a capped block's partial text is
+    what the package returns, and consolidate_run has already sealed such pages as truncated.
+    Malformed JSON raises, so a broken row is an error row, not a blank page.
+    """
+    import html as _html
+    import json
+
+    blocks = json.loads(raw)
+    divs = []
+    for block in sorted(blocks, key=lambda b: b["reading_order"]):
+        if block["skipped"] or not block["html"]:
+            continue
+        label = _html.escape(block["raw_label"] or block["label"], quote=True)
+        divs.append(f'<div data-label="{label}">{block["html"]}</div>')
+    if not divs:
+        return ""
+    return chandra_html_to_markdown("".join(divs), include_headers_footers=True)
 
 
 def falcon_strip_unused_tokens(text: str) -> str:
@@ -754,6 +789,11 @@ REGISTRY = {
     "datalab-to/indra-ocr": (strip_outer_whitespace,),
     # chandra-ocr2-port.py — the vendor's HTML -> markdown conversion (see the function).
     "datalab-to/chandra-ocr-2": (strip_outer_whitespace, chandra_html_to_markdown),
+    # surya-ocr25-port.py — `raw` is the surya-ocr package's page blocks as JSON; rendered with the
+    # chandra converter, page headers and footers kept (see surya_blocks_to_markdown). No
+    # require_non_empty: a blank leaf answered with no blocks is the right answer (as for kraken).
+    # No POSTPROC_VERSION bump (new model).
+    "datalab-to/surya-ocr-2.5": (strip_outer_whitespace, surya_blocks_to_markdown),
     "lightonai/LightOnOCR-3-4B": (strip_outer_whitespace,),
     "lightonai/LightOnOCR-3-0.8B": (strip_outer_whitespace,),
     # nemotron-parse-35-port.py — the vendor's own block-stream -> markdown rendering, then its
