@@ -114,6 +114,16 @@ would drop a legitimate recall target *and* charge a model that transcribed them
 over-extraction. Unrecognized angle brackets are treated as transcription — new model junk should
 surface in `over_extraction`, not earn a regex patch.
 
+Before the strip, the reading lane makes one structural decision about tables (norm `2026-10-30a`).
+A table whose header labels repeat — a two- or three-column printed index written as one table,
+`[ , Plate, Species, , Plate, Species]` — is read one column group at a time, top to bottom, which is
+how the GT reads the printed page; the repeat count comes from the non-empty labels (case and
+punctuation ignored) and the group width from the data columns. Any other table keeps the row-major
+reading the tag strip gives it, which is also how the GT transcribes real data tables. Only the order
+of cells changes, never their text, so the strip treats each cell as before and recall is unaffected.
+The rule is the same for every model; it removes a penalty for output *style* (one table vs one
+table per printed column vs plain lines), not for misreading. Headerless grids stay row-major.
+
 Reporting both lanes makes CER's normalization-sensitivity **visible and versioned** instead of a
 silent config choice — the survey's single biggest credibility recommendation. There is deliberately
 no delta axis: the two lanes remain separate profile values rather than a derived quality signal.

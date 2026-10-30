@@ -39,7 +39,7 @@
     "image_preprocessing": "convert('RGB'), as surya.input.load.load_image; scale_to_fit in the client"
   },
   "postproc_version": "3",
-  "norm_version": "2026-07-20a",
+  "norm_version": "2026-10-30a",
   "scorer_version": "3.0",
   "job": {
     "id": "6ae48b3ec78863f9c62e758a",

@@ -30,6 +30,6 @@
     "output": "hf://buckets/davanstrien/bhl-ocr-runs/falcon-ocr-2026-08-12/full/"
   },
   "postproc_version": "3",
-  "norm_version": "2026-07-20a",
+  "norm_version": "2026-10-30a",
   "scorer_version": "3.0"
 }

@@ -66,6 +66,10 @@ are re-scored instead. The other load-bearing decisions:
   headline used for ordering — but it is normalization- and alignment-*hostage*. Token **recall** is
   format-immune, order-free and needs no markup handling, so it is reported co-equally as the "did it
   read the words" check; the two can disagree, and reading both is the point.
+- **Style is not error** — the reading lane strips a fixed markup set, and reads a table whose header
+  repeats (a multi-column printed index written as one table) one column group at a time, as the GT
+  reads the page. The rule is board-wide; see `DESIGN.md` and the *Index tables* section of
+  `RESULTS.md` (norm `2026-10-30a`).
 - **Fairness via the GT schema, not a growing regex** — furniture (page numbers, running heads,
   catch-words, signatures) is identified from the typed GT and excluded from the headline, reported as
   directionless `furniture_global_token_recall` policy evidence, not accuracy.
@@ -117,6 +121,8 @@ scripts/         # maintenance + run plumbing: gen_axis_catalogue.py -> AXES.md 
                  # emit_launch_commands.py (jobs from the plan, model shas pinned) ·
                  # emit_run_provenance.py (per-model provenance READ from each driver's
                  # SERVING dict, never hand-authored)
+                 # rescore_cached.py (re-score every scorecard after a norm bump, from the
+                 # hash-matched cached text, provenance carried over)
 ```
 
 Plots live *outside* the harness — the product is the raw `leaderboard.json` / scorecard parquets.

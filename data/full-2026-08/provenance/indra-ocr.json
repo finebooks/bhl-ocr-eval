@@ -20,7 +20,7 @@
     "threads_per_worker": 1
   },
   "postproc_version": "3",
-  "norm_version": "2026-07-20a",
+  "norm_version": "2026-10-30a",
   "scorer_version": "3.0",
   "job": {
     "id": "6adb8c3c046eb82b1ecd5759",

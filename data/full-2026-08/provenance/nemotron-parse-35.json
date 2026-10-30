@@ -37,7 +37,7 @@
     "repetition_penalty": 1.1
   },
   "postproc_version": "3",
-  "norm_version": "2026-07-20a",
+  "norm_version": "2026-10-30a",
   "scorer_version": "3.0",
   "job": {
     "id": "6adddb25046eb82b1ece4af0",
