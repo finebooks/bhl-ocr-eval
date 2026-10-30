@@ -1,0 +1,95 @@
+{
+  "producer": "bhl-ocr-eval drivers/surya-ocr25-port.py in-process (no saturate pump) on HF Jobs",
+  "run_id": "surya-ocr25-2026-10",
+  "script": "drivers/surya-ocr25-port.py",
+  "script_commit": "e43af90f0e96668a88f025cb0b26471651455529 (feat/surya-ocr-25-row): the commit drivers/surya-ocr25-port.py was uploaded from for job 6ae48b3ec78863f9c62e758a. Later commits change the driver in one way that matters for reading this record: they add an opt-in --fullpage-regen flag (off by default, so the board row's settings are unchanged; SERVING fullpage_regen is False at both commits) and two output columns (fullpage_rounds, fullpage_regen) that this run's parts do not have. Every other difference is docstring text. The first launch of this run (job 6ae48ad20e0338d1bb7cac53) failed in load_dataset on a Hub read timeout before writing any part, and was relaunched unchanged.",
+  "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+  "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+  "benchmark_page_set_fingerprint": "411a92e4a0e490711dff5875f75363255f2279232c0635fdb162ba4b199da9fd",
+  "model": "datalab-to/surya-ocr-2.5",
+  "model_revision": "00c843e9cae45611dca0a6dc2c9bbbf2dadaaed3",
+  "prompt": null,
+  "settings": {
+    "model": "datalab-to/surya-ocr-2.5",
+    "model_revision": "00c843e9cae45611dca0a6dc2c9bbbf2dadaaed3",
+    "package": "surya-ocr==0.23.0",
+    "vllm_image": "vllm/vllm-openai:v0.25.1@sha256:e4f88a835143cd22aee2397a26ec6bb80b3a4a6fe0c882bcbc63822904766089",
+    "vllm_gpu_type": "a100-80",
+    "vllm_args": [
+      "--no-enforce-eager",
+      "--max-num-seqs",
+      "104",
+      "--dtype",
+      "bfloat16",
+      "--max-model-len",
+      "24576",
+      "--max-num-batched-tokens",
+      "16384",
+      "--gpu-memory-utilization",
+      "0.85",
+      "--enable-prefix-caching",
+      "--mm-processor-kwargs",
+      "{\"min_pixels\": 3136, \"max_pixels\": 6291456}"
+    ],
+    "client_parallel": 96,
+    "mode": "full_page (RecognitionPredictor(..., full_page=True), as the surya_ocr CLI)",
+    "fullpage_regen": false,
+    "max_tokens_full_page": 12288,
+    "guided_layout": true,
+    "image_preprocessing": "convert('RGB'), as surya.input.load.load_image; scale_to_fit in the client"
+  },
+  "postproc_version": "3",
+  "norm_version": "2026-07-20a",
+  "scorer_version": "3.0",
+  "job": {
+    "id": "6ae48b3ec78863f9c62e758a",
+    "created_at": "2026-10-30 12:19:10.504000+00:00",
+    "started_at": "2026-10-30 12:19:17.730000+00:00",
+    "finished_at": "2026-10-30 12:46:59.963000+00:00",
+    "docker_image": "vllm/vllm-openai@sha256:e4f88a835143cd22aee2397a26ec6bb80b3a4a6fe0c882bcbc63822904766089",
+    "space_id": null,
+    "owner": "JobOwner(id='60107b385ac3e86b3ea4fc34', name='davanstrien', type='user')",
+    "command": [
+      "uv",
+      "run",
+      "/data/surya-ocr25-port.py",
+      "--input-dataset",
+      "davanstrien/bhl-eval-impact-full-2165-v1",
+      "--revision",
+      "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+      "--id-column",
+      "PageID",
+      "--output",
+      "hf://buckets/davanstrien/bhl-ocr-runs/surya-ocr25-2026-10/surya-ocr-2.5/"
+    ],
+    "arguments": [],
+    "environment": {},
+    "secrets": [
+      "HF_TOKEN"
+    ],
+    "flavor": "a100-large",
+    "labels": {
+      "project": "bhl",
+      "exp": "surya25",
+      "name": "surya25-full2"
+    },
+    "volumes": [
+      "Volume(type='bucket', source='davanstrien/jobs-artifacts', mount_path='/data', revision=None, read_only=False, path='20261030T121907-eaaf5a')"
+    ],
+    "status": "JobStatus(stage='COMPLETED', message=None, expose_urls=None, ssh_url=None)",
+    "durations": "JobDurations(scheduling_secs=7, running_secs=1662, total_secs=1669)",
+    "initiator": "JobInitiator(type='user', id='60107b385ac3e86b3ea4fc34', name='davanstrien')",
+    "network": null,
+    "retry": 0,
+    "expose": [],
+    "expose_public": null,
+    "endpoint": "https://huggingface.co",
+    "url": "https://huggingface.co/jobs/davanstrien/6ae48b3ec78863f9c62e758a"
+  },
+  "outputs": {
+    "consolidated": "data/full-2026-08/consolidated/surya-ocr25.parquet",
+    "rows": 2165,
+    "unique_page_ids": 2165,
+    "sha256": "7b60371c9527623748af7520764242c24a08137b0433e72bc69af3e18b72c334"
+  }
+}

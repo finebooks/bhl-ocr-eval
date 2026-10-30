@@ -8,17 +8,17 @@ read each number; [DESIGN.md](DESIGN.md) explains why the numbers are built this
 
 ## One board
 
-**2,165 pages, 25 models.** Every page of the IMPACT-BHL ground truth
+**2,165 pages, 26 models.** Every page of the IMPACT-BHL ground truth
 (via [`finebooks/bhl-impact-gt`](https://huggingface.co/datasets/finebooks/bhl-impact-gt)),
 including 428 sparse/blank pages (plates, blanks, near-empty pages), scored for every model on the
-board. We ran 27 models; two are held back — see *What counts as a score*, below.
+board. We ran 28 models; two are held back — see *What counts as a score*, below.
 
 **A page can end three ways.** Scored; *looped* — the model hit its token cap mid repetition loop,
 which excludes the page from that row's aggregates and is counted in the Loop % column; or
 *errored* — the producer failed, and a single producer error makes the row ineligible for ranking
 (fail-closed). Every row below has zero producer errors.
 
-## Headline results (full 2,165 pages · scored 2026-08-04; four rows added 2026-10-23, one 2026-10-25, two 2026-10-26, one 2026-10-27, one 2026-10-28)
+## Headline results (full 2,165 pages · scored 2026-08-04; four rows added 2026-10-23, one 2026-10-25, two 2026-10-26, one 2026-10-27, one 2026-10-28, one 2026-10-30)
 
 | Rank | Model | CER reading | 95% CI | Content CER | Sparse/blank CER | Recall | Loop % |
 |---:|---|---:|---|---:|---:|---:|---:|
@@ -33,20 +33,21 @@ which excludes the page from that row's aggregates and is counted in the Loop % 
 | 9 | **ATH-MaaS/OvisOCR3** (new) | 0.0382 | [0.0283, 0.0481] | 0.0284 | 10.38 | 0.9650 | 0.46 |
 | 10 | PaddlePaddle/PaddleOCR-VL-1.6 | 0.0392 | [0.0259, 0.0499] | 0.0367 | 2.69 | 0.9415 | 6.47 |
 | 11 | allenai/olmOCR-2-7B-1025-FP8 | 0.0432 | [0.0199, 0.0694] | 0.0302 | 13.64 | 0.9573 | 0.55 |
-| 12 | **lightonai/LightOnOCR-3-0.8B** (new) | 0.0455 | [0.0308, 0.0571] | 0.0429 | 2.80 | 0.9659 | 0.88 |
-| 13 | lightonai/LightOnOCR-2-1B | 0.0489 | [0.0269, 0.0706] | 0.0351 | 15.79 | 0.9688 | 2.08 |
-| 14 | zai-org/GLM-OCR | 0.0491 | [0.0256, 0.0720] | 0.0236 | 26.93 | 0.9674 | 0.51 |
-| 15 | Qwen/Qwen3.5-9B | 0.0507 | [0.0292, 0.0771] | 0.0314 | 19.98 | 0.9587 | 1.52 |
-| 16 | baidu/Qianfan-OCR | 0.0575 | [0.0312, 0.0876] | 0.0404 | 17.89 | 0.9540 | 1.06 |
-| 17 | baidu/Unlimited-OCR | 0.0604 | [0.0351, 0.0820] | 0.0451 | 16.19 | 0.9537 | 0.46 |
-| 18 | **nvidia/Nemotron-3.5-Parse** (new) | 0.0611 | [0.0485, 0.0761] | 0.0480 | 13.88 | 0.9202 | 6.56 |
-| 19 | deepseek-ai/DeepSeek-OCR | 0.0617 | [0.0467, 0.0754] | 0.0590 | 2.96 | 0.9206 | 0.55 |
-| 20 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
-| 21 | **datalab-to/indra-ocr** (new) | 0.0642 | [0.0257, 0.1010] | 0.0621 | 2.30 | 0.9493 | 0.00 |
-| 22 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
-| 23 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
-| 24 | **SoMarkAI/OXR-1.0** (new) | 0.1117 | [0.0334, 0.1790] | 0.1098 | 2.11 | 0.9551 | 0.00 |
-| 25 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
+| 12 | **datalab-to/surya-ocr-2.5** (new) | 0.0432 | [0.0349, 0.0509] | 0.0408 | 2.62 | 0.9672 | 0.00 |
+| 13 | **lightonai/LightOnOCR-3-0.8B** (new) | 0.0455 | [0.0308, 0.0571] | 0.0429 | 2.80 | 0.9659 | 0.88 |
+| 14 | lightonai/LightOnOCR-2-1B | 0.0489 | [0.0269, 0.0706] | 0.0351 | 15.79 | 0.9688 | 2.08 |
+| 15 | zai-org/GLM-OCR | 0.0491 | [0.0256, 0.0720] | 0.0236 | 26.93 | 0.9674 | 0.51 |
+| 16 | Qwen/Qwen3.5-9B | 0.0507 | [0.0292, 0.0771] | 0.0314 | 19.98 | 0.9587 | 1.52 |
+| 17 | baidu/Qianfan-OCR | 0.0575 | [0.0312, 0.0876] | 0.0404 | 17.89 | 0.9540 | 1.06 |
+| 18 | baidu/Unlimited-OCR | 0.0604 | [0.0351, 0.0820] | 0.0451 | 16.19 | 0.9537 | 0.46 |
+| 19 | **nvidia/Nemotron-3.5-Parse** (new) | 0.0611 | [0.0485, 0.0761] | 0.0480 | 13.88 | 0.9202 | 6.56 |
+| 20 | deepseek-ai/DeepSeek-OCR | 0.0617 | [0.0467, 0.0754] | 0.0590 | 2.96 | 0.9206 | 0.55 |
+| 21 | deepseek-ai/DeepSeek-OCR-2 | 0.0620 | [0.0453, 0.0833] | 0.0600 | 2.09 | 0.9262 | 0.32 |
+| 22 | **datalab-to/indra-ocr** (new) | 0.0642 | [0.0257, 0.1010] | 0.0621 | 2.30 | 0.9493 | 0.00 |
+| 23 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
+| 24 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
+| 25 | **SoMarkAI/OXR-1.0** (new) | 0.1117 | [0.0334, 0.1790] | 0.1098 | 2.11 | 0.9551 | 0.00 |
+| 26 | tiiuae/Falcon-OCR | 0.1425 | [0.0892, 0.1927] | 0.1164 | 27.66 | 0.9564 | 0.00 |
 
 Where 95% CIs overlap, read the models as tied — the top two are statistically identical, and most
 mid-table neighbours overlap. Loop % carries a selection bias: looped pages are excluded from that
@@ -159,14 +160,14 @@ diplomatic lane does not strip: the converted text carries about 22,000 HTML tag
 HTML, `<sup>`/`<sub>`) and 3,500 markdown escapes. Weights: modified OpenRAIL-M (free for research,
 personal use and startups under $2M; not for use competing with Datalab's API).
 
-**lightonai/LightOnOCR-3-4B (5th, 0.0312) and -0.8B (9th when added, 12th now; 0.0455).** Both improve on
+**lightonai/LightOnOCR-3-4B (5th, 0.0312) and -0.8B (9th when added, 13th now; 0.0455).** Both improve on
 LightOnOCR-2-1B (0.0489), and both cut its sparse/blank hallucination by a factor of five or more
 (2.28 and 2.80 against 15.79). The 4B is better than LightOnOCR-2 on every volume; the Latin
 volume is the hardest for both sizes (0.091 and 0.115). Both run the card's request (image only,
 2048 px, temperature 0.2 / top_p 0.9) on `vllm/vllm-openai:v0.30.0`, not the default
 vLLM image (see *Serving images*), because LightOn's repo says 0.27.1 makes these models loop. Apache-2.0.
 
-**datalab-to/indra-ocr (17th when added, 21st now; 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
+**datalab-to/indra-ocr (17th when added, 22nd now; 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
 run took one 8-vCPU job. It ties Tesseract on the headline, reads French best of any row
 (`histoirenaturell10cuvi` 0.015), and is weakest on the Conchologia plate volume (0.120). It
 recovers only 8% of caption tokens (the 4B recovers 70%). The package's markdown drops only page
@@ -174,7 +175,7 @@ headers and footers by label, so the caption loss happens in its detection, not 
 post-processing. Weights: modified OpenRAIL-M (free for research, personal use and startups under
 $20M; not for use competing with Datalab's API).
 
-**nvidia/Nemotron-3.5-Parse (15th when added, 17th now; 0.0611; added 2026-10-25).** Run on the same pinned benchmark,
+**nvidia/Nemotron-3.5-Parse (15th when added, 18th now; 0.0611; added 2026-10-25).** Run on the same pinned benchmark,
 norm, scorer and post-processing version; combining all 21 scorecards leaves every other row's
 numbers unchanged. Three things hold it back, in order of size.
 
@@ -190,7 +191,7 @@ content pages, â→a 8,200, è→e 4,600, with ä, ü, ö, ê, à, æ and œ fo
 already lack them, so this is the model, not the renderer. A diagnostic re-score with diacritics
 folded on both sides (`scripts/diag_accent_folded.py`; not a board metric, the reading lane keeps
 accents on purpose) lowers its CER by 0.0094, against 0.0003–0.0044 for every other row, and
-would have placed it 13th when added (16th now); on content pages it would score 0.0386, level with LightOnOCR-3-0.8B
+would have placed it 13th when added (17th now); on content pages it would score 0.0386, level with LightOnOCR-3-0.8B
 (0.0398). The same harness with folding switched off reproduces the board exactly. The card's repetition penalty is
 not the cause: on 75 accent-heavy content pages (25 each from the French, German and Conchologia
 volumes) it keeps 30.5% of the GT's accents at 1.1 and 31.1% at 1.0. The loss depends on the
@@ -229,7 +230,7 @@ present. The image appears to be a blank page with a pale yellow background… T
 extracted content is empty." Its CI overlaps OvisOCR2's and most of the rows from 3rd to 9th.
 10 pages (0.46%) loop. Default `vllm/vllm-openai:v0.26.0`. Apache-2.0.
 
-**SoMarkAI/OXR-1.0 (22nd when added, 24th now; 0.1117).** A pipeline, like Falcon-OCR: a D-FINE layout model finds
+**SoMarkAI/OXR-1.0 (22nd when added, 25th now; 0.1117).** A pipeline, like Falcon-OCR: a D-FINE layout model finds
 regions, a 1.5B VLM reads each one and sets the reading order, and the vendor API assembles the
 page. The board scores the vendor's `/v1/parse/sync` endpoint with its default settings. The CI is
 the widest on the board ([0.0334, 0.1790]) because a minority of pages carry most of the error:
@@ -265,7 +266,7 @@ Combining all 24 scorecards leaves every earlier row's numbers unchanged. Proven
 `data/full-2026-08/provenance/unlimited-ocr2.json`.
 
 **baidu/Unlimited-OCR-2 (6th, 0.0329).** The successor to Unlimited-OCR (15th when this row was
-added, 17th now; 0.0604), released the same day, and the largest version-to-version gain on the
+added, 18th now; 0.0604), released the same day, and the largest version-to-version gain on the
 board: the headline error falls by almost half and every volume improves. Conchologia drops from
 0.091 to 0.028 and the Latin volume from 0.185 to 0.118, still the hardest volume for this row, as
 for most. The other change is on sparse/blank pages: 1.90 against v1's 16.19, the third-lowest on
@@ -338,6 +339,44 @@ matching DSpark draft model, which changes speed, not output. The producer is th
 recipe `ocr/minicpm-ocr.py` at 210c5cf, copied byte-for-byte to
 `drivers/minicpm-ocr-port.py`. 2,165 pages took 49 minutes on one RTX PRO 6000. Apache-2.0.
 
+## One row added 2026-10-30
+
+Same pinned benchmark, norm, scorer and post-processing version as the rest of the board.
+Combining all 26 scorecards leaves every earlier row's numbers unchanged. Provenance:
+`data/full-2026-08/provenance/surya-ocr25.json`.
+
+**datalab-to/surya-ocr-2.5 (12th, 0.0432).** A 689M VLM that does layout and OCR in one pass,
+run through Datalab's `surya-ocr` package (0.23.0) exactly as its `surya_ocr` command runs it:
+one full-page request per page, the package's parser and blank-region filter, and its block-mode
+fallback when a full-page answer fails. It ties olmOCR-2 on the headline (0.0432) with a much
+narrower CI, which overlaps every row except dots.ocr, dots.mocr and Falcon-OCR. Median page CER 0.0181. No loops and
+no errors: the package never keeps a capped full-page answer, and only one page fell back to
+block mode. On sparse/blank pages it scores 2.62, with the recent specialists; 347 of the 428
+come back empty. One blank Cuvier leaf comes back as a paragraph of invented pseudo-German.
+
+Index pages carry almost half its error. The model writes the multi-column indexes of
+Conchologia and Birds as HTML tables, and the frozen reading lane reads a table row by row,
+which interleaves the index columns. The 53 content pages with a table hold 45% of its
+content-page error (CER 0.44 on those pages, 0.023 on the rest). Half the board meets the same
+problem on these pages (see MiniCPM-OCR-1.0 above). The
+Latin volume is its hardest (0.116), as for most rows.
+
+Page headers and footers are kept. The package returns them as ordinary text blocks and drops
+nothing; the normalizer renders the blocks with chandra-ocr-2's converter (same vendor, same
+labels) without chandra's header/footer drop. Figures are not read by the package and add no
+text, so plate-number labels inside figures are lost, as for MiniCPM-OCR-1.0.
+
+Every setting is the package default. Datalab's own benchmark harness (`omni_parse_bench`)
+runs this checkpoint the same way, with one difference: it turns on `SURYA_FULLPAGE_REGEN`,
+which re-asks a looping or unparseable full-page answer at rising temperature. A diagnostic run
+with it on scored 0.0443: it fired on no page, so the 0.0011 gap is run-to-run variation (993 of
+2,165 first completions differ between the two runs; 169 pages' scored text differs). The
+package normally starts vLLM in Docker; on Jobs the driver starts the same image
+(`vllm/vllm-openai:v0.25.1`, the package's pin, by digest) with the flags the package's launcher
+sets, serves the checkpoint at a pinned commit, and lets the package attach to it. 2,165 pages
+took 27 minutes on one A100 80 GB. Weights: modified OpenRAIL-M (free for research, personal use
+and startups under $5M; outputs carry the same licence).
+
 ## Caveats
 
 - **Wide CIs by design.** The ground truth spans six volumes (books), and the bootstrap resamples
@@ -367,8 +406,9 @@ attributed to the named model: a hosted inference router does not record which p
 request, at what quantization, or under what serving configuration — and character error rate is
 sensitive to all three.
 
-surya-ocr-2 and PaddlePaddle's PP-OCRv6 join the board in v1.1, once their runs meet the same
-bar. Note that PaddlePaddle's PP-OCRv6 is a different model from the `kraken/PP-OCRv6-medium` row
+surya-ocr-2 was held back from v1 because its library run could not meet that bar; its
+successor, Surya OCR 2.5, is on the board through a driver that does. PaddlePaddle's PP-OCRv6
+joins once its run meets the same bar. Note that PaddlePaddle's PP-OCRv6 is a different model from the `kraken/PP-OCRv6-medium` row
 above, which shares the architecture but not the publisher or the training corpus.
 
 ## Serving images
@@ -385,6 +425,7 @@ Every row's exact image is pinned in its provenance file (`job.docker_image` in
 | Unlimited-OCR-2 | `lmsysorg/sglang:v0.5.20-cu130` + Baidu's SGLang wheel | no vLLM support for v2 |
 | MiniCPM-OCR-1.0 | `cr.hf.co/davanstrien/minicpm-ocr` (vLLM nightly 5d35ce3 + SDK) | the architecture is not in a vLLM release yet |
 | Falcon-OCR | `ghcr.io/tiiuae/falcon-ocr` (vendor image) | vendor pipeline port |
+| Surya OCR 2.5 | `vllm/vllm-openai:v0.25.1` (by digest) + `surya-ocr` 0.23.0 in its own environment | the package's own vLLM pin; the package and vLLM need separate environments |
 | tesseract-5, kraken PP-OCRv6, Indra OCR | `ghcr.io/astral-sh/uv:python3.12-bookworm` | CPU pipelines, no vLLM |
 
 ## Where the numbers come from
