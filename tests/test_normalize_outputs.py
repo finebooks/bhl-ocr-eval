@@ -129,6 +129,19 @@ def test_drop_front_matter_leaves_a_page_without_front_matter_alone():
     assert NO.drop_front_matter(raw) == raw
 
 
+@pytest.mark.parametrize("tail", ["", "\n", "  \n\n"])
+def test_drop_front_matter_alone_is_an_empty_page(tail):
+    """olmOCR-2 answers a blank page with the front matter and nothing after it; the YAML is page
+    metadata, so the page's transcription is empty — not the YAML scored as text."""
+    raw = ("---\nprimary_language: None\nis_rotation_valid: True\nrotation_correction: 0\n"
+           "is_table: False\nis_diagram: False\n---" + tail)
+    assert NO.drop_front_matter(raw) == ""
+
+
+def test_drop_front_matter_keeps_a_body_after_blank_lines_as_before():
+    assert NO.drop_front_matter("---\nprimary_language: en\n---\n\nBody\n") == "Body\n"
+
+
 def test_strip_edge_specials_removes_the_sentence_markers():
     raw = "<｜begin▁of▁sentence｜>\nTHE TEXT\n<｜end▁of▁sentence｜>"
     assert NO.strip_edge_specials(raw) == "THE TEXT"
