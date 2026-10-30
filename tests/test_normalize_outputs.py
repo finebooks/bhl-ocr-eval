@@ -245,8 +245,42 @@ def test_registry_covers_the_markdown_producing_drivers():
         "datalab-to/chandra-ocr-2", "datalab-to/indra-ocr",
         "nvidia/Nemotron-3.5-Parse",
         "ATH-MaaS/OvisOCR3", "SoMarkAI/OXR-1.0", "baidu/Unlimited-OCR-2",
-        "openbmb/MiniCPM-OCR-1.0",
+        "openbmb/MiniCPM-OCR-1.0", "datalab-to/surya-ocr-2.5",
     }
+
+
+def _surya_block(order, raw_label, html, skipped=False):
+    return {"label": raw_label, "raw_label": raw_label, "reading_order": order, "html": html,
+            "skipped": skipped, "error": False}
+
+
+def test_surya_blocks_keep_headers_and_drop_unread_figures():
+    import json
+
+    raw = json.dumps([
+        _surya_block(2, "Text", "<p>Body text.</p>"),
+        _surya_block(0, "Page-Header", "<p>RUNNING HEAD</p>"),
+        _surya_block(1, "Image", "", skipped=True),
+        _surya_block(3, "Page-Footer", "<p>12</p>"),
+    ])
+    assert NO.surya_blocks_to_markdown(raw) == "RUNNING HEAD\n\nBody text.\n\n12"
+
+
+def test_surya_bare_text_headers_stay_separate():
+    import json
+
+    raw = json.dumps([_surya_block(0, "Page-Header", "204"), _surya_block(1, "Page-Header", "APPENDIX"),
+                      _surya_block(2, "Text", "<p>Body.</p>")])
+    assert NO.surya_blocks_to_markdown(raw) == "204\n\nAPPENDIX\n\nBody."
+
+
+def test_surya_blocks_empty_page_is_empty_not_an_error():
+    assert NO.surya_blocks_to_markdown("[]") == ""
+
+
+def test_chandra_still_drops_headers_by_default():
+    html = '<div data-label="Page-Header"><p>HEAD</p></div><div data-label="Text"><p>Body</p></div>'
+    assert NO.chandra_html_to_markdown(html) == "Body"
 
 
 def test_nemotron_parse_uses_the_vendor_renderer_and_trims(monkeypatch):

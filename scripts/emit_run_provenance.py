@@ -46,7 +46,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # claim in it can be a typo. A row here is described as in-process instead.
 NON_SATURATE = {"tesseract": "tesseract-port.py", "kraken-ppocrv6": "kraken-ppocrv6-port.py"}
 # In-process drivers whose row slug already matches `<slug>-port.py`.
-IN_PROCESS_DRIVERS = {"indra-ocr-port.py", "minicpm-ocr-port.py"}
+IN_PROCESS_DRIVERS = {"indra-ocr-port.py", "minicpm-ocr-port.py", "surya-ocr25-port.py"}
 
 
 def literal_from_module(path: pathlib.Path, name: str):

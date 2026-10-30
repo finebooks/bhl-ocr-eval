@@ -108,6 +108,9 @@ META = {
     # layout model (Paddle inference format, no safetensors header) and the DSpark draft model
     # (speeds decoding, does not change the output) are not counted, as for OXR-1.0's D-FINE.
     "openbmb/MiniCPM-OCR-1.0": (1.300, "specialist", "MiniCPM-OCR-1.0"),
+    # Added 2026-10-30, measured the same way: 689,356,864 (BF16) at 00c843e. One VLM does layout
+    # and OCR; the package's separate text-line detector is not used on the full-page path.
+    "datalab-to/surya-ocr-2.5": (0.689, "specialist", "Surya OCR 2.5"),
     # No router-served entries. Six models scored via the Inference Providers router were
     # held out on 2026-08-03 — provider, quantization and serving configuration were never
     # recorded, so their scores are not attributable to the named model. Rationale and the

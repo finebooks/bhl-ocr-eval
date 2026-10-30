@@ -13,5 +13,6 @@
   "rednote-hilab/dots.mocr": "e539fbb52280393adc081b289ec597430a0f9031",
   "rednote-hilab/dots.ocr": "c0111ce6bc07803dbc267932ffef0ae3a51dc951",
   "zai-org/GLM-OCR": "ca5d8b3e287e52589e37c28385d9655ee4372f9d",
-  "openbmb/MiniCPM-OCR-1.0": "a59a4acf215e34c6d73149e9eafdb88ed2086e39"
+  "openbmb/MiniCPM-OCR-1.0": "a59a4acf215e34c6d73149e9eafdb88ed2086e39",
+  "datalab-to/surya-ocr-2.5": "00c843e9cae45611dca0a6dc2c9bbbf2dadaaed3"
 }
