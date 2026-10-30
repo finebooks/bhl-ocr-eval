@@ -27,7 +27,7 @@
     "skip_special_tokens": false
   },
   "postproc_version": "3",
-  "norm_version": "2026-07-20a",
+  "norm_version": "2026-10-30a",
   "scorer_version": "3.0",
   "job": {
     "id": "6a7c745c8747785b3ad50a13",

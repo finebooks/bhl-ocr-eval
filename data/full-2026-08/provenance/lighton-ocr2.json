@@ -26,7 +26,7 @@
     "top_p": 0.9
   },
   "postproc_version": "3",
-  "norm_version": "2026-07-20a",
+  "norm_version": "2026-10-30a",
   "scorer_version": "3.0",
   "job": {
     "id": "6a710f06a00abefd4b2904ce",
