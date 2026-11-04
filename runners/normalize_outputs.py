@@ -617,6 +617,174 @@ def surya_blocks_to_markdown(raw: str) -> str:
     return chandra_html_to_markdown("".join(divs), include_headers_footers=True)
 
 
+def logics_html_to_markdown(text: str) -> str:
+    """Logics-Parsing-v2's HTML page -> markdown (Logics-MLLM/Logics-Parsing-v2).
+
+    The model answers "QwenVL HTML" with `<p>`/`<div class=...>` blocks carrying `data-bbox`
+    coordinates. This is the vendor's own conversion, `qwenvl_cast_html_tag` from
+    github.com/alibaba/Logics-Parsing inference_v2.py at 516925b (Apache-2.0), ported VERBATIM
+    below with its helpers (names prefixed `_logics_`): image tags dropped, class `<div>`
+    wrappers and `<p>` tags unwrapped into paragraphs, code/chart/music blocks fenced. Tables stay
+    HTML, as the vendor leaves them; the reading lane strips their tags as for every row.
+    """
+    return _logics_qwenvl_cast_html_tag(text)
+
+
+# ---- verbatim from Logics-Parsing inference_v2.py @ 516925b (Apache-2.0), helpers renamed ----
+def _logics_remove_lines_starting_with(text):
+    lines = text.splitlines(keepends=True)
+    
+    filtered = []
+    prefixes_to_remove = ('Z:')
+    
+    for line in lines:
+        stripped = line.lstrip()
+        if not stripped.strip():
+            continue
+        if stripped.startswith(prefixes_to_remove):
+            continue
+
+        filtered.append(line)  
+    return "".join(filtered)
+
+def _logics_process_code_content(content: str) -> str:
+    content = content.replace('```', '')
+    
+    content = re.sub(r'^\s*<pre[^>]*>', '', content, flags=re.IGNORECASE)
+    content = re.sub(r'</pre>\s*$', '', content, flags=re.IGNORECASE)
+    
+    content = re.sub(r'^\s*<code[^>]*>', '', content, flags=re.IGNORECASE)
+    content = re.sub(r'</code>\s*$', '', content, flags=re.IGNORECASE)
+    
+    # 包裹在 ``` 中
+    return f"```code\n{content.strip()}\n```"
+
+
+def _logics_process_pseudocode_content(content: str) -> str:
+    """Process pseudocode content, preserving indentation and not breaking LaTeX formulas"""
+
+    content = content.replace('```', '')
+    content = re.sub(r'^\s*<(pre|code)[^>]*>', '', content, flags=re.IGNORECASE | re.MULTILINE)
+    content = re.sub(r'</(pre|code)>\s*$', '', content, flags=re.IGNORECASE | re.MULTILINE)
+
+    # Extract and protect LaTeX formulas
+    math_blocks = []
+    def save_math(match):
+        placeholder = f"___MATH_ID_{len(math_blocks)}___"
+        math_blocks.append(match.group(0))
+        return placeholder
+
+    # Regex: prioritize matching double dollar signs, then single dollar signs
+    math_pattern = r'(\$\$.*?\$\$|\$.*?\$)'
+    protected_content = re.sub(math_pattern, save_math, content, flags=re.DOTALL)
+
+    protected_content = protected_content.replace(' ', '&nbsp;')
+    protected_content = protected_content.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+    protected_content = protected_content.replace('\n', '<br>')
+
+    # Restore LaTeX formulas
+    final_content = protected_content
+    for i, original_math in enumerate(math_blocks):
+        placeholder = f"___MATH_ID_{i}___"
+        final_content = final_content.replace(placeholder, original_math)
+
+    return f"___\n<br>{final_content.strip()}<br>\n___"
+
+
+def _logics_qwenvl_cast_html_tag(input_text: str) -> str:
+    output = input_text
+    IMG_RE = re.compile(
+        r'<img\b[^>]*\bdata-bbox\s*=\s*"?\d+,\d+,\d+,\d+"?[^>]*\/?>',
+        flags=re.IGNORECASE,
+    )
+    output = IMG_RE.sub('', output)
+
+    # code
+    def replace_code(match):
+        content = match.group(1)
+        processed_content = _logics_process_code_content(content)
+        return f"\n\n{processed_content}\n\n"
+    
+    code_pattern = re.compile(
+        r'<div\b[^>]*class="code"[^>]*>(.*?)</div>',
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    output = code_pattern.sub(replace_code, output)
+    
+    # pseudocode
+    def replace_pseudocode(match):
+        content = match.group(1)
+        processed_content = _logics_process_pseudocode_content(content)
+        return f"\n\n{processed_content}\n\n"
+    
+    pseudocode_pattern = re.compile(
+        r'<div\b[^>]*class="pseudocode"[^>]*>(.*?)</div>',
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    output = pseudocode_pattern.sub(replace_pseudocode, output)
+
+    # <div>
+    def strip_div(class_name: str, txt: str) -> str:
+        if class_name in ['code', 'pseudocode']:
+            return txt
+
+        def replace_func(match):
+            content = match.group(1)
+            
+            # 仅针对匹配到的 div 内部内容进行清洗
+            if class_name == 'chart':
+                content = re.sub(r'^\s*(click\s+|style\s+|linkStyle\s+|stroke|classDef\s+|class\s+)\b.*\n?', '', content, flags=re.MULTILINE | re.IGNORECASE)
+                content = re.sub(r'^\s*(?:%%|::icon).*\n?', '', content, flags=re.MULTILINE)
+
+                content = content.strip()
+                if content.startswith('mermaid'):
+                    content = '```' + content
+                elif re.match(r'^```\s*mermaid', content):
+                    pass
+                else:
+                    content = '```mermaid\n' + content
+                if not content.endswith('```'):
+                    content += '\n```'
+
+            if class_name == 'music':
+                content = _logics_remove_lines_starting_with(content)
+
+                content = content.strip()
+                if content.startswith('abc'):
+                    content = '```' + content
+                elif re.match(r'^```\s*abc', content):
+                    pass
+                else:
+                    content = '```abc\n' + content
+                if not content.endswith('```'):
+                    content += '\n```'
+                
+            return f"\n\n{content}\n\n"
+
+        pattern = re.compile(
+            rf'\s*<div\b[^>]*class="{class_name}"[^>]*>(.*?)</div>\s*',
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+        return pattern.sub(replace_func, txt)
+
+    other_classes = ['image', 'chemistry', 'table', 'formula', 'image caption', 'table caption']
+    # other_classes = ['image', 'chemistry', 'table', 'formula', 'image caption', 'table caption', 'music', 'chart']
+    for cls in other_classes:
+        output = strip_div(cls, output)
+    
+    # <p>
+    output = re.sub(
+        r'<p\b[^>]*>(.*?)</p>',
+        r'\n\n\1\n\n',
+        output,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    
+    output = output.replace(" </td>", "</td>")
+    return output
+# ---- end of the verbatim Logics-Parsing block ----
+
+
 def falcon_strip_unused_tokens(text: str) -> str:
     """Drop leaked `>>UNUSED_N<<` vocab tokens (tiiuae/Falcon-OCR).
 
@@ -811,6 +979,17 @@ REGISTRY = {
     # require_non_empty: a blank leaf answered with no blocks is the right answer (as for kraken).
     # No POSTPROC_VERSION bump (new model).
     "datalab-to/surya-ocr-2.5": (strip_outer_whitespace, surya_blocks_to_markdown),
+    # surya-ocr2-port.py — the previous Surya release through surya-ocr 0.22.1; the same page
+    # blocks JSON, rendered the same way as the 2.5 row. No POSTPROC_VERSION bump (new model).
+    "datalab-to/surya-ocr-2": (strip_outer_whitespace, surya_blocks_to_markdown),
+    # mineru25-pro-port.py — `raw` is the page markdown MinerU's own `json2md` renders from its
+    # client's blocks, so strip only (as for Falcon-OCR and indra-ocr, whose packages also return
+    # assembled markdown). No require_non_empty: a blank leaf with no blocks is the right answer.
+    # No POSTPROC_VERSION bump (new model).
+    "opendatalab/MinerU2.5-Pro-2605-1.2B": (strip_outer_whitespace,),
+    # logics-parsing-v2-port.py — the vendor's HTML -> markdown conversion (see the function).
+    # No POSTPROC_VERSION bump (new model).
+    "Logics-MLLM/Logics-Parsing-v2": (strip_outer_whitespace, logics_html_to_markdown),
     "lightonai/LightOnOCR-3-4B": (strip_outer_whitespace,),
     "lightonai/LightOnOCR-3-0.8B": (strip_outer_whitespace,),
     # nemotron-parse-35-port.py — the vendor's own block-stream -> markdown rendering, then its

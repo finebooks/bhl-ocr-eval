@@ -259,7 +259,34 @@ def test_registry_covers_the_markdown_producing_drivers():
         "nvidia/Nemotron-3.5-Parse",
         "ATH-MaaS/OvisOCR3", "SoMarkAI/OXR-1.0", "baidu/Unlimited-OCR-2",
         "openbmb/MiniCPM-OCR-1.0", "datalab-to/surya-ocr-2.5",
+        "datalab-to/surya-ocr-2", "opendatalab/MinerU2.5-Pro-2605-1.2B",
+        "Logics-MLLM/Logics-Parsing-v2",
     }
+
+
+def test_logics_html_unwraps_paragraphs_and_drops_images():
+    raw = ('<p data-bbox="10,10,500,40">CONCHOLOGIA ICONICA.</p>'
+           '<img data-bbox="10,50,500,400"/>'
+           '<p data-bbox="10,420,500,460">Plate I. Species 1.</p>')
+    out = NO.logics_html_to_markdown(raw)
+    assert "CONCHOLOGIA ICONICA." in out and "Plate I. Species 1." in out
+    assert "<p" not in out and "<img" not in out
+    # The two paragraphs stay separate words, not run together.
+    assert "ICONICA.Plate" not in out
+
+
+def test_logics_html_keeps_tables_as_html_for_the_reading_lane():
+    raw = '<div class="table" data-bbox="1,2,3,4"><table><tr><td>a</td><td>b</td></tr></table></div>'
+    out = NO.logics_html_to_markdown(raw)
+    assert "<table>" in out and 'class="table"' not in out
+
+
+def test_new_rows_resolve_to_their_chains():
+    assert NO.resolve_transforms("opendatalab/MinerU2.5-Pro-2605-1.2B") == (NO.strip_outer_whitespace,)
+    assert NO.resolve_transforms("datalab-to/surya-ocr-2") == (
+        NO.strip_outer_whitespace, NO.surya_blocks_to_markdown)
+    assert NO.resolve_transforms("Logics-MLLM/Logics-Parsing-v2") == (
+        NO.strip_outer_whitespace, NO.logics_html_to_markdown)
 
 
 def _surya_block(order, raw_label, html, skipped=False):
