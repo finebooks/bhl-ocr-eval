@@ -15,7 +15,7 @@ import normalizers as N
 import scorer as S
 
 ERROR_FLAG = "error"
-REPORT_SCHEMA_VERSION = "2.1"
+REPORT_SCHEMA_VERSION = "2.2"  # 2.2: all-pages CER + its CI on every card; order follows it
 # postproc_version has no entry in current_global_provenance(): the registry lives in
 # runners/normalize_outputs.py, which the frozen scoring core must not import. The board
 # still refuses to mix rows normalized under different registry versions ("mixed" check
@@ -211,9 +211,11 @@ def model_scorecard(
 
     `truncated_n` is the subset of this model's error rows whose completion hit the token
     cap (`finish_reason != "stop"`), counted upstream where the sentinel is still visible.
-    Truncated pages are excluded from every aggregate exactly like other error rows — a
-    runaway page emits thousands of characters against a few hundred of ground truth, so
-    scoring it whole would turn micro-CER into a loop counter. But they do NOT make a model
+    Truncated pages are excluded from every aggregate except `cer_reading_all_pages_micro`,
+    exactly like other error rows — a runaway page emits thousands of characters against a
+    few hundred of ground truth, so scoring it whole would turn micro-CER into a loop
+    counter. The all-pages number, which the board ranks on, counts such a page as a page
+    with no output instead. But they do NOT make a model
     ineligible: a repetition loop is the MODEL failing on that page, not the run failing,
     and disqualifying every neural model over a handful of pages out of 2165 would leave
     only the classical engines rankable. See `truncation_rate` — it is a board column, not
@@ -261,9 +263,10 @@ def model_scorecard(
         # Reading CER over EVERY submitted page. An error row is scored against empty OCR
         # (gt_score.score_gt_row), so a looped page counts here as a page with no output: its
         # whole reference is deleted and none of the runaway text is charged as insertions.
-        # This is the number that answers "what if I ran this model on the whole collection";
+        # It scores the text a user keeps after dropping the pages that hit the token cap;
         # `cer_reading_micro` answers "how well does it read the pages it finishes". The two
-        # differ only for rows with truncated or errored pages.
+        # differ only for rows with truncated or errored pages. Known limit: a loop on a page
+        # with no reference text costs nothing here, so read it beside `truncation_rate`.
         "cer_reading_all_pages_micro": micro_rate(rows, "cer_body_read"),
         "cer_all_pages_ci": (all_lo, all_hi),
         "cer_reading_median": median(clean, "cer_reading"),
@@ -656,7 +659,7 @@ def report(rows, expected_page_ids=None, *, require_complete=True, include_polic
         )
 
     def sort_key(model):
-        # The board ranks on all-pages CER, so a row cannot rise by looping on its hardest pages.
+        # The board ranks on all-pages CER, so a row is charged for the text on the pages it loops on.
         value = cards[model]["cer_reading_all_pages_micro"]
         return value is None, value if value is not None else 0, model
 
@@ -693,24 +696,26 @@ def format_report(result):
     cards = result["scorecards"]
     lines = [
         "=" * 116,
-        "BHL OCR SCORECARD — ordered point estimates; headline = micro-averaged CER (reading lane), lower better",
+        "BHL OCR SCORECARD — ordered by CERall: micro-averaged reading-lane CER over all pages, a looped page "
+        "scored as no output; lower better",
         f"provenance: norm={prov['norm_version']} · scorer={prov['scorer_version']} · "
         f"{prov['score']['grapheme_mode']} · pages={prov['page_count']} · page-set={prov['page_set_fingerprint'][:12]}",
         "=" * 116,
-        f"{'model':30} {'CERdip':>7} {'CERread':>7} {'CER95%CI':>16} {'recallµ':>8} "
+        f"{'model':30} {'CERall':>7} {'CERall95%CI':>16} {'CERread':>7} {'CERdip':>7} {'recallµ':>8} "
         f"{'overµ':>7} {'furnµ':>7} {'n':>5} {'err':>4} {'loop%':>6} {'miss':>4} {'extra':>5} "
         f"{'eligible':>8}",
     ]
 
     def append_card(model):
         card = cards[model]
-        ci = card["cer_ci"]
+        ci = card["cer_all_pages_ci"]
         ci_string = f"[{ci[0]}, {ci[1]}]" if ci[0] is not None else "—"
         rate = card.get("truncation_rate")
         loop_pct = f"{100 * rate:.2f}" if rate is not None else "—"
         lines.append(
-            f"{model[:30]:30} {card['cer_diplomatic_micro']!s:>7} {card['cer_reading_micro']!s:>7} "
-            f"{ci_string:>16} {card['recall_micro']!s:>8} {card['over_extraction_micro']!s:>7} "
+            f"{model[:30]:30} {card['cer_reading_all_pages_micro']!s:>7} {ci_string:>16} "
+            f"{card['cer_reading_micro']!s:>7} {card['cer_diplomatic_micro']!s:>7} "
+            f"{card['recall_micro']!s:>8} {card['over_extraction_micro']!s:>7} "
             f"{card['furniture_global_token_recall_micro']!s:>7} {card['n']:>5} "
             f"{card['producer_errors']:>4} {loop_pct:>6} "
             f"{card['missing']:>4} {card['extra']:>5} {str(card['eligible']):>8}"
@@ -737,9 +742,10 @@ def format_report(result):
         first = result["eligible_order"][0]
         lines.append(f"per-language micro CER ({first}): {cards[first]['by_language']}")
         lines.append(f"region global token evidence ({first}): {cards[first]['region_global_token_recall']}")
-    lines.append("Flagged-error metrics are conditional on successful pages. A PRODUCER error or a missing page\n"
-        "makes a model ineligible; a truncation (loop%) excludes the page but not the model — and a\n"
-        "higher loop% means the row was scored on an easier effective page set.")
+    lines.append("Every metric except CERall is conditional on successful pages. A PRODUCER error or a missing\n"
+        "page makes a model ineligible; a truncation (loop%) excludes the page from those metrics but not\n"
+        "the model, and CERall counts it as a page with no output. A loop on a page with no reference\n"
+        "text costs nothing in CERall, so read it beside loop%.")
     return "\n".join(lines)
 
 
