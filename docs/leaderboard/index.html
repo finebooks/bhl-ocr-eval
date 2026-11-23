@@ -120,12 +120,12 @@
   table{border-collapse:collapse;width:100%;min-width:940px}
   thead th{position:sticky;top:0;background:var(--surface-2);text-align:right;font-size:11px;
            letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);font-weight:600;
-           padding:10px 12px;white-space:nowrap;border-bottom:1px solid var(--line-2);cursor:pointer;user-select:none}
+           padding:10px 8px;white-space:nowrap;border-bottom:1px solid var(--line-2);cursor:pointer;user-select:none}
   thead th.l{text-align:left}
   thead th.sortable:hover{color:var(--accent-ink)}
   th .ar{opacity:.5;font-size:9px}
   th.act .ar{opacity:1;color:var(--accent-ink)}
-  tbody td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;
+  tbody td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;
            font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:13px}
   tbody td.l{text-align:left;font-family:var(--f-ui)}
   tbody tr:hover td{background:color-mix(in oklab,var(--accent) 6%,transparent)}
@@ -331,7 +331,7 @@ function scatter(){
     s+=`<line class="gl" x1="${x.toFixed(1)}" y1="${mT}" x2="${x.toFixed(1)}" y2="${mT+ih}" stroke-opacity=".5"/>`;
     s+=`<text class="axtxt" x="${x.toFixed(1)}" y="${mT+ih+16}" text-anchor="middle">${p<1?p:p+'B'}</text>`;});
   s+=`<text class="axlbl" x="${mL+iw/2}" y="${H-4}" text-anchor="middle">parameters (log scale)</text>`;
-  s+=`<text class="axlbl" transform="translate(14,${mT+ih/2}) rotate(-90)" text-anchor="middle">CER · reading (lower better)</text>`;
+  s+=`<text class="axlbl" transform="translate(14,${mT+ih/2}) rotate(-90)" text-anchor="middle">CER · all pages (lower better)</text>`;
   // baseline axes
   s+=`<line class="gl" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ih}"/>`;
   /* Label every point that fits without touching another point or label — computed from the
