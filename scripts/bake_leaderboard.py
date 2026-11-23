@@ -157,6 +157,8 @@ def _row(model_id, card, *, with_strata):
         "type": mtype,
         "params": params,
         "cer_read": _round(card["cer_reading_micro"]),
+        "cer_all": _round(card["cer_reading_all_pages_micro"]),
+        "ci_all": [_round(card["cer_all_pages_ci"][0]), _round(card["cer_all_pages_ci"][1])],
         "cer_dip": _round(card["cer_diplomatic_micro"]),
         "ci": [_round(card["cer_ci"][0]), _round(card["cer_ci"][1])]
         if card.get("cer_ci")
@@ -207,7 +209,7 @@ def load_board(path, *, with_strata):
             )
             continue
         scored.append(_row(model_id, card, with_strata=with_strata))
-    scored.sort(key=lambda r: r["cer_read"])
+    scored.sort(key=lambda r: r["cer_all"])
     return board, scored, excluded
 
 

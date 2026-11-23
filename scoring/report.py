@@ -232,6 +232,7 @@ def model_scorecard(
         max(0, expected_n - len(rows)) if expected_n is not None else 0
     )
     lo, hi = bootstrap_ci(clean, lambda sample: micro_rate(sample, "cer_body_read"), n=ci_n)
+    all_lo, all_hi = bootstrap_ci(rows, lambda sample: micro_rate(sample, "cer_body_read"), n=ci_n)
     recall_matched, recall_reference = _pool_support(clean, "recall_matched", "recall_reference")
     extra, output = _pool_support(clean, "over_extraction_extra", "over_extraction_output")
     furniture_matched, furniture_reference = _pool_support(
@@ -257,6 +258,14 @@ def model_scorecard(
         "cer_diplomatic_micro": micro_rate(clean, "cer_body_dip"),
         "cer_reading_micro": micro_rate(clean, "cer_body_read"),
         "cer_ci": (lo, hi),
+        # Reading CER over EVERY submitted page. An error row is scored against empty OCR
+        # (gt_score.score_gt_row), so a looped page counts here as a page with no output: its
+        # whole reference is deleted and none of the runaway text is charged as insertions.
+        # This is the number that answers "what if I ran this model on the whole collection";
+        # `cer_reading_micro` answers "how well does it read the pages it finishes". The two
+        # differ only for rows with truncated or errored pages.
+        "cer_reading_all_pages_micro": micro_rate(rows, "cer_body_read"),
+        "cer_all_pages_ci": (all_lo, all_hi),
         "cer_reading_median": median(clean, "cer_reading"),
         "recall_micro": _support_rate(recall_matched, recall_reference),
         "recall_matched": recall_matched,
@@ -647,7 +656,8 @@ def report(rows, expected_page_ids=None, *, require_complete=True, include_polic
         )
 
     def sort_key(model):
-        value = cards[model]["cer_reading_micro"]
+        # The board ranks on all-pages CER, so a row cannot rise by looping on its hardest pages.
+        value = cards[model]["cer_reading_all_pages_micro"]
         return value is None, value if value is not None else 0, model
 
     eligible_order = sorted((model for model, card in cards.items() if card["eligible"]), key=sort_key)

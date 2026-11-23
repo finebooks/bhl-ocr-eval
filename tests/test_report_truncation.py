@@ -78,3 +78,24 @@ def test_missing_pages_still_disqualify_regardless_of_truncation():
                                expected_n=100, missing_n=5, truncated_n=5)
     assert card["producer_errors"] == 0
     assert card["eligible"] is False, "an unsubmitted page is not the same as a looped one"
+
+
+def test_all_pages_cer_counts_a_truncated_page_as_no_output():
+    # Clean pages: 90 hits + 10 substitutions each -> CER 0.10. An error row is scored
+    # against empty OCR, so its whole 100-character reference is a deletion.
+    def row(err):
+        base = _rows(n_clean=0 if err else 1, n_err=1 if err else 0)[0]
+        if err:
+            base.update(cer_body_read_d=100)
+        else:
+            base.update(cer_body_read_s=10, cer_body_read_h=90)
+        return base
+    rows = [row(False) for _ in range(8)] + [row(True) for _ in range(2)]
+    card = RPT.model_scorecard(rows, ci_n=5, expected_n=10, missing_n=0, truncated_n=2)
+    assert card["cer_reading_micro"] == 0.1            # the 8 finished pages only
+    assert card["cer_reading_all_pages_micro"] == 0.28  # (80 + 200) / 1000
+
+
+def test_all_pages_cer_equals_reading_cer_without_truncations():
+    card = RPT.model_scorecard(_rows(n_clean=20), ci_n=5, expected_n=20, missing_n=0)
+    assert card["cer_reading_all_pages_micro"] == card["cer_reading_micro"]
