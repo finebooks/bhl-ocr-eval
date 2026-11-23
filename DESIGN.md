@@ -214,8 +214,8 @@ Alternatives considered and not adopted:
   half of the error total for PaddleOCR-VL-1.6 (55%) and Nemotron-3.5-Parse (52%) would be the
   imputed penalty.
 - **Scoring the runaway output with a uniform insertion cap.** This is more symmetric between loops
-  and hallucinations, but it needs the raw looped outputs (the runner replaces them with a
-  sentinel), it re-ranks models that never loop, and on blank pages it reduces to the same constant.
+  and hallucinations, and the raw looped text is kept (`raw_verbatim`), so it needs no new runs.
+  But it re-ranks models that never loop, and on blank pages it reduces to the same constant.
   Left as an open question.
 - **Ranking on content pages only.** This hides invented text on blank pages: GLM-OCR would rank
   2nd while writing about 187 invented characters per blank page.
