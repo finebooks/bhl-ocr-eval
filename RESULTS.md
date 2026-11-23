@@ -52,14 +52,15 @@ excluded from that row's other aggregates; or
 
 The board is ranked on CER all pages: the reading-lane CER over all 2,165 pages, where a looped page
 is scored as if the model returned nothing (its whole reference text is missed, and none of the
-runaway text is charged). CER reading and the columns to its right are computed on the pages the row
+runaway text is charged). CER reading and the columns to its right, Loop % excepted, are computed on the pages the row
 finished; for a row that never loops the two CERs are equal. [DESIGN.md](DESIGN.md) explains the
 choice.
 
 Where 95% CIs overlap, read the models as tied — chandra-ocr-2 leads on the point estimate, but its
 interval overlaps every row from 2nd to 7th, and most mid-table neighbours overlap. Loop % carries
 a selection bias in CER reading: looped pages are excluded from that row's other numbers, so a
-high loop rate means the row is scored with its hardest pages removed (dots.ocr is scored on 96.1%
+high loop rate can mean the row is scored with its hardest pages removed, when the loops fall on
+content pages (dots.ocr is scored on 96.1%
 of the corpus, PaddleOCR-VL-1.6 on 93.5%, DeepSeek-OCR-2 on 99.7%). CER all pages charges those
 pages as missed text, but a loop on a page with no reference text costs nothing there.
 Read Loop % alongside CER, never on its own.
@@ -70,7 +71,7 @@ Read Loop % alongside CER, never on its own.
   neighbours do — read the models as tied.
 - **Loop %** is the repetition-loop rate, the characteristic neural failure on this material
   (Tesseract's is 0.00). Looped pages are excluded from that row's other numbers except CER all
-  pages, so a high rate also means CER reading is scored with the row's hardest pages removed; and
+  pages, so a high rate can also mean CER reading is scored with the row's hardest pages removed; and
   a loop on a page with no reference text costs nothing in CER all pages — read it alongside CER,
   never alone.
 - **Sparse CER** is where models diverge most: strong content OCR can coexist with runaway
@@ -99,7 +100,7 @@ confidence interval overlapping most of the top ten. Three things about it are w
 **It wins the diplomatic lane outright.** CER diplomatic 0.0405, against 0.0503 for the next best
 (dots.mocr) and 0.0560 for dots.ocr. The two lanes differ in whether
 long-s, ligatures and case are folded before scoring, so diplomatic divided by reading measures
-how much of a model's headline score depends on that folding. kraken's is 1.20x (0.0405/0.0338);
+how much of a model's reading-lane score depends on that folding. kraken's is 1.20x (0.0405/0.0338);
 dots.ocr's is 2.50x (0.0560/0.0224) — more than half of its reading-lane score is the fold. The
 generative models partly win the reading lane by modernising orthography as they read, and on a
 board about historical print the diplomatic column is the one that says who transcribed the page
@@ -376,7 +377,7 @@ Conchologia and Birds as HTML tables, and the frozen reading lane reads a table 
 which interleaves the index columns. The 53 content pages with a table hold 45% of its
 content-page error (CER 0.44 on those pages, 0.023 on the rest). Half the board meets the same
 problem on these pages (see MiniCPM-OCR-1.0 above). Norm 2026-10-30a reads these tables one column
-group at a time, which takes the row to 0.0351 (10th); see *Index tables are read one column group
+group at a time, which takes the row to 0.0351 (10th on CER reading); see *Index tables are read one column group
 at a time*. The
 Latin volume is its hardest (0.116), as for most rows.
 

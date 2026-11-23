@@ -120,8 +120,8 @@ stuck. For others (Nemotron-3.5-Parse, PaddleOCR-VL-1.6, OvisOCR2) most loops ar
 The runaway text is never scored, because a page that emits thousands of characters against a few
 hundred of real text would swamp the average. Those pages are excluded from CER (reading) and the
 other accuracy scores; in CER (all pages) they count as pages with no output. They do **not** make a model
-ineligible: looping is the model failing on a page, not the run failing, and on this corpus every
-model that generates text loops somewhere (0.32%–6.47%), so disqualifying them would leave only the
+ineligible: looping is the model failing on a page, not the run failing, and on this corpus most
+models that generate text loop somewhere (0.09%–6.56%), so disqualifying them would leave only the
 non-neural engines ranked.
 
 **Read loop% alongside CER, never on its own.** In CER (reading) looped pages are removed, so a

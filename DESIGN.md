@@ -158,8 +158,8 @@ as a separate error count (an *unflagged* empty output is a real model failure a
 These metrics are explicitly conditional on successful pages. **Producer errors** — transport failures, absent response bodies,
 post-processing that could not model the output — make a model ineligible. **Truncations** do not:
 they are excluded from the finished-page aggregates exactly like errors, but reported separately as a
-repetition-loop rate, because every generating model on this corpus truncates somewhere (measured
-0.32%–6.47%) and disqualifying all of them would leave only the non-neural engines rankable.
+repetition-loop rate, because most generating models on this corpus truncate somewhere (measured
+0.09%–6.56% where it happens) and disqualifying all of them would leave only the non-neural engines rankable.
 
 That exclusion has a cost the board must state rather than hide: **removing truncated pages flatters
 the models that truncate most** when their loops fall on hard pages. For some models (dots.ocr,
@@ -218,7 +218,7 @@ Alternatives considered and not adopted:
   But it re-ranks models that never loop, and on blank pages it reduces to the same constant.
   Left as an open question.
 - **Ranking on content pages only.** This hides invented text on blank pages: GLM-OCR would rank
-  2nd while writing about 187 invented characters per blank page.
+  2nd while writing about 187 invented characters per sparse or blank page.
 
 ## The furniture trade-off (the one to be explicit about)
 
