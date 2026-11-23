@@ -56,7 +56,7 @@ runaway text is charged). CER reading and the columns to its right, Loop % excep
 finished; for a row that never loops the two CERs are equal. [DESIGN.md](DESIGN.md) explains the
 choice.
 
-Where 95% CIs overlap, read the models as tied — chandra-ocr-2 leads on the point estimate, but its
+Where 95% CIs overlap, the order is not established — chandra-ocr-2 leads on the point estimate, but its
 interval overlaps every row from 2nd to 7th, and most mid-table neighbours overlap. Loop % carries
 a selection bias in CER reading: looped pages are excluded from that row's other numbers, so a
 high loop rate can mean the row is scored with its hardest pages removed, when the loops fall on
@@ -68,7 +68,7 @@ Read Loop % alongside CER, never on its own.
 ## Reading this board
 
 - **CIs first, ranks second.** Where the 95% CIs overlap — the top seven do, and most mid-table
-  neighbours do — read the models as tied.
+  neighbours do — the order is not established.
 - **Loop %** is the repetition-loop rate, the characteristic neural failure on this material
   (Tesseract's is 0.00). Looped pages are excluded from that row's other numbers except CER all
   pages, so a high rate can also mean CER reading is scored with the row's hardest pages removed; and
@@ -162,7 +162,7 @@ reproduces every existing row's numbers exactly. Provenance for each row is in
 
 **datalab-to/chandra-ocr-2 (3rd when added, 1st now; 0.0285).** The lowest measured loop rate of any generative model
 on the board (0.09%, 2 pages; Falcon-OCR's 0.00 is by construction, its pipeline reports no finish
-reason), and the fourth-best content CER. Its CI overlaps both dots rows. The driver
+reason), and the best content CER (0.0184). Its CI overlaps both dots rows. The driver
 ports Datalab's own vLLM client (`chandra-ocr` v0.2.0: `ocr_layout` prompt, image scaling) with one
 deliberate difference: the vendor client resamples a looping page up to six times at a raised
 temperature, and this driver makes one greedy attempt, like every other row. The model answers in
@@ -206,7 +206,7 @@ content pages, â→a 8,200, è→e 4,600, with ä, ü, ö, ê, à, æ and œ fo
 already lack them, so this is the model, not the renderer. A diagnostic re-score with diacritics
 folded on both sides (`scripts/diag_accent_folded.py`; not a board metric, the reading lane keeps
 accents on purpose) lowers its CER by 0.0094, against 0.0003–0.0044 for every other row, and
-would have placed it 13th when added (17th now); on content pages it would score 0.0386, level with LightOnOCR-3-0.8B
+would have placed it 13th on CER reading when added; on content pages it would score 0.0386, level with LightOnOCR-3-0.8B
 (0.0398). The same harness with folding switched off reproduces the board exactly. The card's repetition penalty is
 not the cause: on 75 accent-heavy content pages (25 each from the French, German and Conchologia
 volumes) it keeps 30.5% of the GT's accents at 1.1 and 31.1% at 1.0. The loss depends on the
@@ -474,7 +474,7 @@ interleaved reading did.
 | 25 → 25 | SoMarkAI/OXR-1.0 | 0.1117 | 0.1104 | 7 / 3 |
 | 26 → 26 | tiiuae/Falcon-OCR | 0.1425 | 0.1384 | 10 / 2 |
 
-**The top three are tied, before and after.** dots.mocr 0.0211 [0.0137, 0.0281], chandra-ocr-2
+**The top three on CER reading were tied, before and after.** dots.mocr 0.0211 [0.0137, 0.0281], chandra-ocr-2
 0.0214 [0.0151, 0.0279] and dots.ocr 0.0224 [0.0156, 0.0294] have almost the same intervals. Before
 the re-score dots.ocr (0.0235) and dots.mocr (0.0237) were already tied. The new order among the
 three is not a measured difference; read it as a tie. The whole effect comes from about 35 index
@@ -495,7 +495,7 @@ CER reading, which ordered the board before it moved to CER all pages.
 
 - **Wide CIs by design.** The ground truth spans six volumes (books), and the bootstrap resamples
   volumes, not pages — so CIs are honest about book-to-book variation and correspondingly wide.
-  Where CIs overlap, treat models as tied.
+  Where CIs overlap, the order is not established.
 - **Loop % is also a selection effect.** See the note under the table: excluding looped pages
   flatters heavy loopers' CER reading and other numbers. The headline counts a looped page as
   missed text, but a loop on a page with no reference text costs it nothing. The column exists so
