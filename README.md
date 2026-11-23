@@ -41,8 +41,9 @@ Run the frozen-core self-tests standalone with `uv run scoring/scorer.py` / `uv 
 ## Reading the board
 
 The board covers every model on all 2,165 pages, including the sparse/blank stratum. Models are
-ordered by micro-averaged character error rate, with volume-bootstrap confidence intervals
-alongside; where the intervals overlap, the models are tied. Recall, over-extraction, furniture
+ordered by micro-averaged character error rate over all pages, with a page on which the model
+looped scored as a page with no output, and volume-bootstrap confidence intervals alongside; where
+the intervals overlap, the models are tied. Recall, over-extraction, furniture
 policy, loop rate and the per-stratum and per-language breakdowns sit beside CER as columns,
 because each carries signal the others hide: a model can read more words yet align worse.
 
@@ -63,7 +64,8 @@ are re-scored instead. The other load-bearing decisions:
 - **Don't collapse** — a model gets a *profile* across axes, never one grade.
 - **CER orders; recall is the co-equal robustness check.** CER (micro-averaged, in an NFC *diplomatic*
   and an NFKC *reading* lane, following ISRI/UNLV and OCR-D `dinglehopper`) is the field-comparable
-  headline used for ordering — but it is normalization- and alignment-*hostage*. Token **recall** is
+  headline used for ordering (the reading lane, over all pages, with a looped page counted as missed
+  text) — but it is normalization- and alignment-*hostage*. Token **recall** is
   format-immune, order-free and needs no markup handling, so it is reported co-equally as the "did it
   read the words" check; the two can disagree, and reading both is the point.
 - **Style is not error** — the reading lane strips a fixed markup set, and reads a table whose header

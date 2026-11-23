@@ -205,8 +205,8 @@
         <th class="l sortable" data-k="name">Model <span class="ar">▾</span></th>
         <th class="l" data-k="type">Type <span class="info" tabindex="0" data-tip="How the model works: <b>VLM</b> = general vision-language model · <b>specialist</b> = OCR-specific model · <b>classical</b> = non-neural OCR engine.">i</span></th>
         <th class="sortable" data-k="params">Params <span class="info" tabindex="0" data-tip="Model size in billions of parameters, <b>measured</b> from the repo's safetensors index (all weights, vision towers included) rather than taken from the model's name — GLM-OCR is 1.33B, not the 0.9B it is usually listed as, and olmOCR-2-<b>7B</b> is 8.29B. Classical engines have no comparable count and are left off the scatter below.">i</span> <span class="ar">▾</span></th>
-        <th class="sortable act" data-k="cer_all">CER · all pages <span class="info" tabindex="0" data-tip="CER · reading over <b>every</b> page. A page where the model looped is scored as if it returned nothing: its text counts as missed, so a looped page with no text costs nothing — see Looped. Equal to CER · reading for a row with no loops or errors. It scores the text you keep after dropping looped pages; <b>lower is better</b>. The board ranks on this.">i</span> <span class="ar">▾</span></th>
-        <th class="sortable" data-k="loop">Looped <span class="info" tabindex="0" data-tip="Pages where generation hit its token cap in a <b>repetition loop</b>, as a share of all pages and as a count. Such a page is left out of every other number on the row and is scored as a page with no output in CER&nbsp;·&nbsp;all&nbsp;pages. A loop on a page with no text costs nothing there, so read the two columns together; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable act" data-k="cer_all">CER · all pages <span class="info" tabindex="0" data-tip="CER · reading over <b>every</b> page. A page where the model looped is scored as if it returned nothing: its text counts as missed, so a looped page with no text costs nothing — see Loop&nbsp;%. Equal to CER · reading for a row with no loops or errors. It scores the text you keep after dropping looped pages; <b>lower is better</b>. The board ranks on this.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="loop">Loop % <span class="info" tabindex="0" data-tip="Pages where generation hit its token cap in a <b>repetition loop</b>, as a share of all pages and as a count. Such a page is left out of every other number on the row and is scored as a page with no output in CER&nbsp;·&nbsp;all&nbsp;pages. A loop on a page with no text costs nothing there, so read the two columns together; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
         <th class="sortable" data-k="cer_read">CER · reading <span class="info" tabindex="0" data-tip="Character error rate, <b>reading</b> lane — NFKC, case-folded, de-hyphenated, markup stripped, body only. Reading ability, not transcription convention. Micro-averaged across the pages the model finished (looped pages excluded); <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
         <th class="sortable" data-k="cer_dip">CER · dip <span class="info" tabindex="0" data-tip="Character error rate, <b>diplomatic</b> lane — NFC, case-sensitive, keeps long-s (ſ), ligatures and diacritics. Fidelity to the original spelling; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
         <th class="sortable" data-k="content_cer">Content <span class="info" tabindex="0" data-tip="CER · reading over the 1,737 <b>content</b> pages only — ordinary text pages.">i</span> <span class="ar">▾</span></th>
@@ -235,7 +235,7 @@
     design.</p>
     <ul>
       <li><b>A page can end three ways.</b> Scored; <i>looped</i> (hit its token cap mid repetition
-      loop — left out of CER&nbsp;·&nbsp;reading and the other columns, counted in Looped, and scored
+      loop — left out of CER&nbsp;·&nbsp;reading and the other columns, counted in Loop&nbsp;%, and scored
       as a page with no output in CER&nbsp;·&nbsp;all&nbsp;pages); or <i>errored</i> (the
       producer failed — any error makes the row ineligible for ranking under fail-closed scoring).</li>
       <li><b>CER · reading</b> folds long-s/case/ligatures (reading ability); <b>CER · dip</b> keeps them
@@ -476,7 +476,7 @@ else{exNote.remove();}
   if(!loopers.length)return;
   const w=loopers.reduce((a,b)=>a.loop>b.loop?a:b);
   document.getElementById("loopNote").innerHTML=
-    `<b>Read CER · all pages beside Looped.</b> A looped page is scored as a page with no output, so the `+
+    `<b>Read CER · all pages beside Loop %.</b> A looped page is scored as a page with no output, so the `+
     `row is charged for the text on it. A loop on a page with no text costs nothing, so a high loop rate `+
     `can leave the number almost unchanged: ${w.name} looped on ${w.looped} pages (${lp(w.loop)}) and goes `+
     `from ${pf(w.cer_read)} on the pages it finished to ${pf(w.cer_all)} on all pages. The other columns `+

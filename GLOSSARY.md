@@ -21,7 +21,7 @@ Ask which of these you care about, then read the matching column:
   the headline. A model can be excellent on English but fail on German, or transcribe the body text
   perfectly while dropping every footnote.
 
-The table is ordered by the CER point estimate, but small gaps should be read alongside the reported
+The table is ordered by the point estimate of **CER (all pages)**, but small gaps should be read alongside the reported
 confidence intervals rather than turned into claims of equivalence or meaningful separation.
 
 ## Glossary
@@ -45,6 +45,15 @@ are about historical spelling:
   just want usable, searchable text.
 Read the two separate values together: a large difference often means formatting or transcription
 convention rather than a reading failure. The report does not turn that difference into a delta axis.
+
+**CER (all pages)** — the board's headline and ranking column. It is CER (reading) computed over
+every page of the benchmark, including the pages where the model looped (see *Loop rate*). A looped
+page is scored as if the model returned nothing: all of its real text counts as missed, and none of
+the runaway text is counted. It scores the text a careful user would keep: a loop is easy to spot,
+so you would drop that page and lose the text on it. Invented text that stops normally is not easy
+to spot, so it counts in full. CER (reading) is the same number over only the pages the model
+finished; for a model that never loops the two are equal. One limit: a loop on a page with no real
+text costs nothing here, so read it beside loop%.
 
 **Recall (micro)** — of the BODY words that *should* be on the page, how many did the model actually
 produce. **Higher is better.** Duplicate words count with their multiplicity, and model-level recall
@@ -90,7 +99,8 @@ and the report shows submitted, successfully scored n, errors, CER, recall, and 
 both expected strata even when one stratum failed entirely.
 
 **Confidence interval** — the benchmark is 2,165 pages, and every score still has some wobble. The
-interval shows uncertainty under resampling whole volumes. The table remains ordered by point score;
+interval shows uncertainty under resampling whole volumes. The table remains ordered by the CER
+(all pages) point score;
 overlapping intervals alone do not establish equivalence.
 
 **Eligibility** — a model is eligible only when its actual page set matches the authoritative full-GT
@@ -102,19 +112,22 @@ scorecard parquet files are combined later.
 A **repetition loop is not a producer error** and does not disqualify — see *Loop rate*.
 
 **Loop rate (loop%)** — how often a model ran away with itself: it kept generating until it hit its
-token limit instead of stopping. On this corpus that is almost always a repetition loop, usually
-triggered by repeating typography — a table of contents with rows of dot leaders, a ruled index —
-and the model has often transcribed the page correctly before it gets stuck.
+token limit instead of stopping. On this corpus that is almost always a repetition loop. For some
+models it is usually triggered by repeating typography — a table of contents with rows of dot
+leaders, a ruled index — and the model has often transcribed the page correctly before it gets
+stuck. For others (Nemotron-3.5-Parse, PaddleOCR-VL-1.6, OvisOCR2) most loops are on blank pages.
 
-Those pages are excluded from the accuracy scores, because a page that emits thousands of characters
-against a few hundred of real text would swamp the average. But they do **not** make a model
+The runaway text is never scored, because a page that emits thousands of characters against a few
+hundred of real text would swamp the average. Those pages are excluded from CER (reading) and the
+other accuracy scores; in CER (all pages) they count as pages with no output. They do **not** make a model
 ineligible: looping is the model failing on a page, not the run failing, and on this corpus every
 model that generates text loops somewhere (0.32%–6.47%), so disqualifying them would leave only the
 non-neural engines ranked.
 
-**Read loop% alongside CER, never on its own.** Because looped pages are removed, a model that loops
-a lot is scored on an easier remainder — loops cluster on the hardest layouts. A model at 6.5% is
-judged on 93.5% of the corpus with many of the hard pages taken out; one at 0.3% is judged on 99.7%.
+**Read loop% alongside CER, never on its own.** In CER (reading) looped pages are removed, so a
+model that loops a lot on hard layouts is scored on an easier remainder. A model at 6.5% is judged
+on 93.5% of the corpus; one at 0.3% is judged on 99.7%. CER (all pages) counts those pages as
+missed text, but a loop on a page with no real text costs nothing there.
 
 **Post-processing version (POSTPROC)** — the per-model cleanup applied to raw model output before
 scoring (dropping bounding-box markup, converting DocTags to text, and so on). It is versioned and

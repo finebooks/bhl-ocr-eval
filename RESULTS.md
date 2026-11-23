@@ -14,61 +14,70 @@ including 428 sparse/blank pages (plates, blanks, near-empty pages), scored for 
 board. We ran 28 models; two are held back — see *What counts as a score*, below.
 
 **A page can end three ways.** Scored; *looped* — the model hit its token cap mid repetition loop,
-which excludes the page from that row's aggregates and is counted in the Loop % column; or
+which is counted in the Loop % column, scored as a page with no output in CER all pages, and
+excluded from that row's other aggregates; or
 *errored* — the producer failed, and a single producer error makes the row ineligible for ranking
 (fail-closed). Every row below has zero producer errors.
 
 ## Headline results (full 2,165 pages · scored 2026-08-04; four rows added 2026-10-23, one 2026-10-25, two 2026-10-26, one 2026-10-27, one 2026-10-28, one 2026-10-30; all rows re-scored 2026-10-30 under norm 2026-10-30a)
 
-| Rank | Model | CER reading | 95% CI | Content CER | Sparse/blank CER | Recall | Loop % |
-|---:|---|---:|---|---:|---:|---:|---:|
-| 1 | rednote-hilab/dots.mocr | 0.0211 | [0.0137, 0.0281] | 0.0190 | 2.23 | 0.9836 | 0.88 |
-| 2 | **datalab-to/chandra-ocr-2** (new) | 0.0214 | [0.0151, 0.0279] | 0.0184 | 3.14 | 0.9810 | 0.09 |
-| 3 | rednote-hilab/dots.ocr | 0.0224 | [0.0156, 0.0294] | 0.0208 | 1.79 | 0.9704 | 3.88 |
-| 4 | **lightonai/LightOnOCR-3-4B** (new) | 0.0247 | [0.0184, 0.0303] | 0.0225 | 2.28 | 0.9711 | 0.42 |
-| 5 | allenai/olmOCR-2-7B-1025-FP8 | 0.0279 | [0.0121, 0.0439] | 0.0260 | 1.96 | 0.9573 | 0.55 |
-| 6 | ATH-MaaS/OvisOCR2 | 0.0299 | [0.0228, 0.0353] | 0.0274 | 2.79 | 0.9614 | 2.54 |
-| 7 | **baidu/Unlimited-OCR-2** (new) | 0.0329 | [0.0258, 0.0417] | 0.0311 | 1.90 | 0.9675 | 0.14 |
-| 8 | **openbmb/MiniCPM-OCR-1.0** (new) | 0.0334 | [0.0151, 0.0468] | 0.0312 | 2.29 | 0.9634 | 0.00 |
-| 9 | kraken/PP-OCRv6-medium | 0.0338 | [0.0237, 0.0442] | 0.0316 | 2.34 | 0.9760 | 0.00 |
-| 10 | **datalab-to/surya-ocr-2.5** (new) | 0.0351 | [0.0299, 0.0413] | 0.0326 | 2.62 | 0.9672 | 0.00 |
-| 11 | **lightonai/LightOnOCR-3-0.8B** (new) | 0.0363 | [0.0259, 0.0463] | 0.0337 | 2.80 | 0.9659 | 0.88 |
-| 12 | **ATH-MaaS/OvisOCR3** (new) | 0.0373 | [0.0282, 0.0466] | 0.0275 | 10.38 | 0.9650 | 0.46 |
-| 13 | PaddlePaddle/PaddleOCR-VL-1.6 | 0.0392 | [0.0259, 0.0499] | 0.0367 | 2.69 | 0.9415 | 6.47 |
-| 14 | lightonai/LightOnOCR-2-1B | 0.0408 | [0.0248, 0.0569] | 0.0271 | 15.79 | 0.9688 | 2.08 |
-| 15 | zai-org/GLM-OCR | 0.0491 | [0.0256, 0.0720] | 0.0236 | 26.93 | 0.9674 | 0.51 |
-| 16 | Qwen/Qwen3.5-9B | 0.0498 | [0.0286, 0.0759] | 0.0305 | 19.98 | 0.9587 | 1.52 |
-| 17 | baidu/Qianfan-OCR | 0.0575 | [0.0312, 0.0876] | 0.0404 | 17.89 | 0.9540 | 1.06 |
-| 18 | baidu/Unlimited-OCR | 0.0575 | [0.0327, 0.0772] | 0.0422 | 16.19 | 0.9537 | 0.46 |
-| 19 | **nvidia/Nemotron-3.5-Parse** (new) | 0.0575 | [0.0478, 0.0676] | 0.0444 | 13.88 | 0.9202 | 6.56 |
-| 20 | deepseek-ai/DeepSeek-OCR-2 | 0.0614 | [0.0448, 0.0833] | 0.0594 | 2.09 | 0.9262 | 0.32 |
-| 21 | deepseek-ai/DeepSeek-OCR | 0.0616 | [0.0467, 0.0753] | 0.0589 | 2.96 | 0.9206 | 0.55 |
-| 22 | **datalab-to/indra-ocr** (new) | 0.0621 | [0.0257, 0.0989] | 0.0600 | 2.30 | 0.9493 | 0.00 |
-| 23 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
-| 24 | ds4sd/SmolDocling-256M-preview | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
-| 25 | **SoMarkAI/OXR-1.0** (new) | 0.1104 | [0.0330, 0.1762] | 0.1085 | 2.11 | 0.9551 | 0.00 |
-| 26 | tiiuae/Falcon-OCR | 0.1384 | [0.0892, 0.1835] | 0.1124 | 27.66 | 0.9564 | 0.00 |
+| Rank | Model | CER all pages | 95% CI | CER reading | 95% CI | Content CER | Sparse/blank CER | Recall | Loop % |
+|---:|---|---:|---|---:|---|---:|---:|---:|---:|
+| 1 | **datalab-to/chandra-ocr-2** (new) | 0.0214 | [0.0151, 0.0279] | 0.0214 | [0.0151, 0.0279] | 0.0184 | 3.14 | 0.9810 | 0.09 |
+| 2 | **lightonai/LightOnOCR-3-4B** (new) | 0.0307 | [0.0225, 0.0390] | 0.0247 | [0.0184, 0.0303] | 0.0225 | 2.28 | 0.9711 | 0.42 |
+| 3 | ATH-MaaS/OvisOCR2 | 0.0324 | [0.0243, 0.0391] | 0.0299 | [0.0228, 0.0353] | 0.0274 | 2.79 | 0.9614 | 2.54 |
+| 4 | **baidu/Unlimited-OCR-2** (new) | 0.0329 | [0.0258, 0.0417] | 0.0329 | [0.0258, 0.0417] | 0.0311 | 1.90 | 0.9675 | 0.14 |
+| 5 | rednote-hilab/dots.mocr | 0.0330 | [0.0138, 0.0535] | 0.0211 | [0.0137, 0.0281] | 0.0190 | 2.23 | 0.9836 | 0.88 |
+| 6 | **openbmb/MiniCPM-OCR-1.0** (new) | 0.0334 | [0.0151, 0.0468] | 0.0334 | [0.0151, 0.0468] | 0.0312 | 2.29 | 0.9634 | 0.00 |
+| 7 | kraken/PP-OCRv6-medium | 0.0338 | [0.0237, 0.0442] | 0.0338 | [0.0237, 0.0442] | 0.0316 | 2.34 | 0.9760 | 0.00 |
+| 8 | **datalab-to/surya-ocr-2.5** (new) | 0.0351 | [0.0299, 0.0413] | 0.0351 | [0.0299, 0.0413] | 0.0326 | 2.62 | 0.9672 | 0.00 |
+| 9 | allenai/olmOCR-2-7B-1025-FP8 | 0.0370 | [0.0128, 0.0545] | 0.0279 | [0.0121, 0.0439] | 0.0260 | 1.96 | 0.9573 | 0.55 |
+| 10 | **ATH-MaaS/OvisOCR3** (new) | 0.0378 | [0.0292, 0.0467] | 0.0373 | [0.0282, 0.0466] | 0.0275 | 10.38 | 0.9650 | 0.46 |
+| 11 | **lightonai/LightOnOCR-3-0.8B** (new) | 0.0437 | [0.0343, 0.0514] | 0.0363 | [0.0259, 0.0463] | 0.0337 | 2.80 | 0.9659 | 0.88 |
+| 12 | PaddlePaddle/PaddleOCR-VL-1.6 | 0.0477 | [0.0332, 0.0607] | 0.0392 | [0.0259, 0.0499] | 0.0367 | 2.69 | 0.9415 | 6.47 |
+| 13 | rednote-hilab/dots.ocr | 0.0483 | [0.0265, 0.0764] | 0.0224 | [0.0156, 0.0294] | 0.0208 | 1.79 | 0.9704 | 3.88 |
+| 14 | zai-org/GLM-OCR | 0.0527 | [0.0284, 0.0733] | 0.0491 | [0.0256, 0.0720] | 0.0236 | 26.93 | 0.9674 | 0.51 |
+| 15 | lightonai/LightOnOCR-2-1B | 0.0557 | [0.0351, 0.0854] | 0.0408 | [0.0248, 0.0569] | 0.0271 | 15.79 | 0.9688 | 2.08 |
+| 16 | baidu/Unlimited-OCR | 0.0576 | [0.0327, 0.0772] | 0.0575 | [0.0327, 0.0772] | 0.0422 | 16.19 | 0.9537 | 0.46 |
+| 17 | **nvidia/Nemotron-3.5-Parse** (new) | 0.0582 | [0.0485, 0.0681] | 0.0575 | [0.0478, 0.0676] | 0.0444 | 13.88 | 0.9202 | 6.56 |
+| 18 | **datalab-to/indra-ocr** (new) | 0.0621 | [0.0257, 0.0989] | 0.0621 | [0.0257, 0.0989] | 0.0600 | 2.30 | 0.9493 | 0.00 |
+| 19 | tesseract-5 | 0.0642 | [0.0421, 0.0794] | 0.0642 | [0.0421, 0.0794] | 0.0591 | 5.49 | 0.9210 | 0.00 |
+| 20 | deepseek-ai/DeepSeek-OCR-2 | 0.0663 | [0.0449, 0.0952] | 0.0614 | [0.0448, 0.0833] | 0.0594 | 2.09 | 0.9262 | 0.32 |
+| 21 | baidu/Qianfan-OCR | 0.0670 | [0.0397, 0.0938] | 0.0575 | [0.0312, 0.0876] | 0.0404 | 17.89 | 0.9540 | 1.06 |
+| 22 | deepseek-ai/DeepSeek-OCR | 0.0677 | [0.0471, 0.0841] | 0.0616 | [0.0467, 0.0753] | 0.0589 | 2.96 | 0.9206 | 0.55 |
+| 23 | Qwen/Qwen3.5-9B | 0.0704 | [0.0401, 0.0948] | 0.0498 | [0.0286, 0.0759] | 0.0305 | 19.98 | 0.9587 | 1.52 |
+| 24 | **SoMarkAI/OXR-1.0** (new) | 0.1104 | [0.0330, 0.1762] | 0.1104 | [0.0330, 0.1762] | 0.1085 | 2.11 | 0.9551 | 0.00 |
+| 25 | ds4sd/SmolDocling-256M-preview | 0.1252 | [0.0690, 0.1718] | 0.0660 | [0.0342, 0.1007] | 0.0649 | 1.21 | 0.8892 | 5.22 |
+| 26 | tiiuae/Falcon-OCR | 0.1384 | [0.0892, 0.1835] | 0.1384 | [0.0892, 0.1835] | 0.1124 | 27.66 | 0.9564 | 0.00 |
 
-Where 95% CIs overlap, read the models as tied — the top three (dots.mocr, chandra-ocr-2, dots.ocr)
-are a statistical tie, as the top two were before the 2026-10-30 re-score, and most mid-table
-neighbours overlap. The order among them moved when index tables started to be read by column
-group (see *Index tables are read one column group at a time*); it is not a measured difference. Loop % carries a selection bias: looped pages are excluded from that
-row's other numbers, so a high loop rate means the row is scored with its hardest pages removed
-(dots.ocr is scored on 96.1% of the corpus, PaddleOCR-VL-1.6 on 93.5%, DeepSeek-OCR-2 on 99.7%).
-Read it alongside CER, never on its own.
+The board is ranked on CER all pages: the reading-lane CER over all 2,165 pages, where a looped page
+is scored as if the model returned nothing (its whole reference text is missed, and none of the
+runaway text is charged). CER reading and the columns to its right are computed on the pages the row
+finished; for a row that never loops the two CERs are equal. [DESIGN.md](DESIGN.md) explains the
+choice.
+
+Where 95% CIs overlap, read the models as tied — chandra-ocr-2 leads on the point estimate, but its
+interval overlaps every row from 2nd to 7th, and most mid-table neighbours overlap. Loop % carries
+a selection bias in CER reading: looped pages are excluded from that row's other numbers, so a
+high loop rate means the row is scored with its hardest pages removed (dots.ocr is scored on 96.1%
+of the corpus, PaddleOCR-VL-1.6 on 93.5%, DeepSeek-OCR-2 on 99.7%). CER all pages charges those
+pages as missed text, but a loop on a page with no reference text costs nothing there.
+Read Loop % alongside CER, never on its own.
 
 ## Reading this board
 
-- **CIs first, ranks second.** Where the 95% CIs overlap — the top three do, and most mid-table
+- **CIs first, ranks second.** Where the 95% CIs overlap — the top seven do, and most mid-table
   neighbours do — read the models as tied.
 - **Loop %** is the repetition-loop rate, the characteristic neural failure on this material
-  (Tesseract's is 0.00). Looped pages are excluded from that row's other numbers, so a high rate
-  also means the row is scored with its hardest pages removed — read it alongside CER, never alone.
+  (Tesseract's is 0.00). Looped pages are excluded from that row's other numbers except CER all
+  pages, so a high rate also means CER reading is scored with the row's hardest pages removed; and
+  a loop on a page with no reference text costs nothing in CER all pages — read it alongside CER,
+  never alone.
 - **Sparse CER** is where models diverge most: strong content OCR can coexist with runaway
   hallucination on near-empty pages (compare GLM-OCR's 0.0236 content vs 26.93 sparse). If your
   collection has plates and blanks — most real collections do — weight this column.
 - **The two CER lanes** separate formatting from misreading: *reading* folds long-s, case and
-  ligatures; *diplomatic* keeps them. A wide gap (LightOnOCR-2: 0.0864 dip / 0.0489 read) means
+  ligatures; *diplomatic* keeps them. A wide gap (LightOnOCR-2: 0.0864 dip / 0.0408 read) means
   normalization choices, not reading errors.
 - **Reads is a policy, not a quality**: whether a model transcribes page furniture (running heads,
   page numbers). The body-only CER neither rewards nor penalises it — but if you need furniture
@@ -84,22 +93,23 @@ accompanying blog post rather than here.
 
 `kraken/PP-OCRv6-medium` is the first row that is not a single end-to-end model: kraken's bundled
 `blla` segmenter finds the text lines and orders them, then a 15.9M-parameter CTC recogniser
-transcribes each one. It ranks 9th on the headline (4th when it was added in September), with a
+transcribes each one. It ranks 7th on the headline (4th when it was added in September), with a
 confidence interval overlapping most of the top ten. Three things about it are worth more than the rank.
 
 **It wins the diplomatic lane outright.** CER diplomatic 0.0405, against 0.0503 for the next best
-(dots.mocr) and 0.0560 for the model that leads the reading lane. The two lanes differ in whether
+(dots.mocr) and 0.0560 for dots.ocr. The two lanes differ in whether
 long-s, ligatures and case are folded before scoring, so diplomatic divided by reading measures
 how much of a model's headline score depends on that folding. kraken's is 1.20x (0.0405/0.0338);
-dots.ocr's is 2.38x (0.0560/0.0235) — more than half of its reading-lane score is the fold. The
+dots.ocr's is 2.50x (0.0560/0.0224) — more than half of its reading-lane score is the fold. The
 generative models partly win the reading lane by modernising orthography as they read, and on a
 board about historical print the diplomatic column is the one that says who transcribed the page
 in front of them.
 
 **It is scored on every page.** n = 2,165, loop rate 0.00 — a CTC recogniser has no token cap to
-run into. The three rows above it are scored on 96.1%, 99.1% and 97.5% of the corpus respectively,
-with their looped pages (disproportionately the hard ones) excluded from their own aggregates. The
-comparison is not like-for-like in kraken's favour.
+run into. On CER reading, rows that loop are scored with their looped pages (disproportionately
+the hard ones) excluded from their own aggregates: dots.ocr, 3rd on that column, is scored on
+96.1% of the corpus. The headline counts those pages as missed text, so there the comparison with
+kraken is like-for-like, except for loops on pages with no reference text.
 
 **Its weakness is segmentation, not recognition.** Two failures show up, and neither is visible in
 the error or loop columns:
@@ -149,7 +159,7 @@ the rest of the board, so the numbers are directly comparable. Combining all twe
 reproduces every existing row's numbers exactly. Provenance for each row is in
 `data/full-2026-08/provenance/` (`chandra-ocr2`, `lighton-ocr3-4b`, `lighton-ocr3-0.8b`, `indra-ocr`).
 
-**datalab-to/chandra-ocr-2 (3rd when added, 2nd now; 0.0285).** The lowest measured loop rate of any generative model
+**datalab-to/chandra-ocr-2 (3rd when added, 1st now; 0.0285).** The lowest measured loop rate of any generative model
 on the board (0.09%, 2 pages; Falcon-OCR's 0.00 is by construction, its pipeline reports no finish
 reason), and the fourth-best content CER. Its CI overlaps both dots rows. The driver
 ports Datalab's own vLLM client (`chandra-ocr` v0.2.0: `ocr_layout` prompt, image scaling) with one
@@ -162,14 +172,14 @@ diplomatic lane does not strip: the converted text carries about 22,000 HTML tag
 HTML, `<sup>`/`<sub>`) and 3,500 markdown escapes. Weights: modified OpenRAIL-M (free for research,
 personal use and startups under $2M; not for use competing with Datalab's API).
 
-**lightonai/LightOnOCR-3-4B (5th when added, 4th now; 0.0312) and -0.8B (9th when added, 11th now; 0.0455).** Both improve on
+**lightonai/LightOnOCR-3-4B (5th when added, 2nd now; 0.0312) and -0.8B (9th when added, 11th now; 0.0455).** Both improve on
 LightOnOCR-2-1B (0.0489), and both cut its sparse/blank hallucination by a factor of five or more
 (2.28 and 2.80 against 15.79). The 4B is better than LightOnOCR-2 on every volume; the Latin
 volume is the hardest for both sizes (0.091 and 0.115). Both run the card's request (image only,
 2048 px, temperature 0.2 / top_p 0.9) on `vllm/vllm-openai:v0.30.0`, not the default
 vLLM image (see *Serving images*), because LightOn's repo says 0.27.1 makes these models loop. Apache-2.0.
 
-**datalab-to/indra-ocr (17th when added, 22nd now; 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
+**datalab-to/indra-ocr (17th when added, 18th now; 0.0642).** A CPU pipeline of small ONNX models: the whole 2,165-page
 run took one 8-vCPU job. It ties Tesseract on the headline, reads French best of any row
 (`histoirenaturell10cuvi` 0.015), and is weakest on the Conchologia plate volume (0.120). It
 recovers only 8% of caption tokens (the 4B recovers 70%). The package's markdown drops only page
@@ -177,7 +187,7 @@ headers and footers by label, so the caption loss happens in its detection, not 
 post-processing. Weights: modified OpenRAIL-M (free for research, personal use and startups under
 $20M; not for use competing with Datalab's API).
 
-**nvidia/Nemotron-3.5-Parse (15th when added, 19th now; 0.0611; added 2026-10-25).** Run on the same pinned benchmark,
+**nvidia/Nemotron-3.5-Parse (15th when added, 17th now; 0.0611; added 2026-10-25).** Run on the same pinned benchmark,
 norm, scorer and post-processing version; combining all 21 scorecards leaves every other row's
 numbers unchanged. Three things hold it back, in order of size.
 
@@ -186,7 +196,9 @@ the page ("…provided by the National Natural Science Foundation, which is base
 Natural Science Foundation…") and loops until the token cap. 142 pages (6.6%) loop, 141 of them
 sparse/blank (a third of that stratum; 99 are Conchologia plates), and the sparse/blank pages that
 do finish score 13.88 against 1.8–3.1 for the other recent specialists. Looped pages are excluded
-from the aggregates, so the headline is computed on an easier page set than most rows.
+from CER reading and the other aggregates. The headline scores them as pages with no output, which
+costs nothing on a page with no reference text, so it moves only from 0.0575 to 0.0582; read its
+Loop % beside it.
 
 *Accents.* It drops diacritics the page has: é→e alone accounts for about 9,800 substitutions on
 content pages, â→a 8,200, è→e 4,600, with ä, ü, ö, ê, à, æ and œ following. The raw completions
@@ -223,7 +235,7 @@ coordinate and class tokens scores slightly worse. Weights and plugin: OpenMDW-1
 Both rows use the same pinned benchmark, norm, scorer and post-processing version as the rest of
 the board. Combining all 23 scorecards leaves every earlier row's numbers unchanged.
 
-**ATH-MaaS/OvisOCR3 (7th when added, 12th now; 0.0382).** The 0.8B successor to OvisOCR2, run with the card's
+**ATH-MaaS/OvisOCR3 (7th when added, 10th now; 0.0382).** The 0.8B successor to OvisOCR2, run with the card's
 `document_markdown` prompt, which is OvisOCR2's prompt word for word. On content pages the two are
 level (0.0284 against 0.0280). The whole gap is on sparse/blank pages (10.38 against 2.79): on 111
 of the 428, mostly Conchologia plates (70) and Birds plates (39), it writes a note about the page
@@ -232,7 +244,7 @@ present. The image appears to be a blank page with a pale yellow background… T
 extracted content is empty." Its CI overlaps OvisOCR2's and most of the rows from 3rd to 9th.
 10 pages (0.46%) loop. Default `vllm/vllm-openai:v0.26.0`. Apache-2.0.
 
-**SoMarkAI/OXR-1.0 (22nd when added, 25th now; 0.1117).** A pipeline, like Falcon-OCR: a D-FINE layout model finds
+**SoMarkAI/OXR-1.0 (22nd when added, 24th now; 0.1117).** A pipeline, like Falcon-OCR: a D-FINE layout model finds
 regions, a 1.5B VLM reads each one and sets the reading order, and the vendor API assembles the
 page. The board scores the vendor's `/v1/parse/sync` endpoint with its default settings. The CI is
 the widest on the board ([0.0334, 0.1790]) because a minority of pages carry most of the error:
@@ -267,8 +279,8 @@ Same pinned benchmark, norm, scorer and post-processing version as the rest of t
 Combining all 24 scorecards leaves every earlier row's numbers unchanged. Provenance:
 `data/full-2026-08/provenance/unlimited-ocr2.json`.
 
-**baidu/Unlimited-OCR-2 (6th when added, 7th now; 0.0329).** The successor to Unlimited-OCR (15th when this row was
-added, 18th now; 0.0604), released the same day, and the largest version-to-version gain on the
+**baidu/Unlimited-OCR-2 (6th when added, 4th now; 0.0329).** The successor to Unlimited-OCR (15th when this row was
+added, 16th now; 0.0604), released the same day, and the largest version-to-version gain on the
 board: the headline error falls by almost half and every volume improves. Conchologia drops from
 0.091 to 0.028 and the Latin volume from 0.185 to 0.118, still the hardest volume for this row, as
 for most. The other change is on sparse/blank pages: 1.90 against v1's 16.19, the third-lowest on
@@ -311,13 +323,14 @@ Same pinned benchmark, norm, scorer and post-processing version as the rest of t
 Combining all 25 scorecards leaves every earlier row's numbers unchanged. Provenance:
 `data/full-2026-08/provenance/minicpm-ocr.json`.
 
-**openbmb/MiniCPM-OCR-1.0 (8th when added, 8th now; 0.0368).** A pipeline, like OXR-1.0 and kraken: OpenBMB's
+**openbmb/MiniCPM-OCR-1.0 (8th when added, 6th now; 0.0368).** A pipeline, like OXR-1.0 and kraken: OpenBMB's
 `minicpm-ocr` SDK finds regions with PP-DocLayoutV3, a 1.3B model reads each region with a
 prompt for its type (text, table, formula), and the SDK joins the results in reading order.
 Its median page CER (0.0059) is the fifth-lowest on the board, close to chandra-ocr-2 and
 dots.ocr. On the Birds volume it has the board's lowest error (0.0065, against 0.0141 for
 dots.mocr). The Latin volume is its hardest (0.128, 14th): long s comes out as "f"
-("Infpeftore"), as for most rows. Its CI overlaps every row but Falcon-OCR.
+("Infpeftore"), as for most rows. Its CI overlaps every row but Nemotron-3.5-Parse, DeepSeek-OCR,
+SmolDocling and Falcon-OCR.
 
 The row keeps footnotes and side notes. The SDK reads page numbers, running heads, footers,
 footnotes and side notes, then by default leaves all five out of the Markdown. The benchmark
@@ -352,7 +365,8 @@ Combining all 26 scorecards leaves every earlier row's numbers unchanged. Proven
 run through Datalab's `surya-ocr` package (0.23.0) exactly as its `surya_ocr` command runs it:
 one full-page request per page, the package's parser and blank-region filter, and its block-mode
 fallback when a full-page answer fails. It tied olmOCR-2 on the headline when added (0.0432; olmOCR-2 is 0.0321 since the
-front-matter fix below), with a much narrower CI, which overlaps every row except dots.ocr, dots.mocr and Falcon-OCR. Median page CER 0.0181. No loops and
+front-matter fix below), with a much narrower CI, which now overlaps every row except chandra-ocr-2,
+Nemotron-3.5-Parse, tesseract-5, both DeepSeek-OCR rows, SmolDocling and Falcon-OCR. Median page CER 0.0181. No loops and
 no errors: the package never keeps a capped full-page answer, and only one page fell back to
 block mode. On sparse/blank pages it scores 2.62, with the recent specialists; 347 of the 428
 come back empty. One blank Cuvier leaf comes back as a paragraph of invented pseudo-German.
@@ -473,7 +487,8 @@ changing the top-three tie. A model that prints the two columns as interleaved p
 help: plain text carries no column structure to recover, and that is a reading-order error.
 
 The sections above describe each row as it was added, so the numbers they quote for that day are
-under norm `2026-07-20a`; this table and the headline are current.
+under norm `2026-07-20a`; this table and the headline are current. The ranks in this table are by
+CER reading, which ordered the board before it moved to CER all pages.
 
 ## Caveats
 
@@ -481,7 +496,9 @@ under norm `2026-07-20a`; this table and the headline are current.
   volumes, not pages — so CIs are honest about book-to-book variation and correspondingly wide.
   Where CIs overlap, treat models as tied.
 - **Loop % is also a selection effect.** See the note under the table: excluding looped pages
-  flatters heavy loopers' other numbers. The column exists so that this is visible.
+  flatters heavy loopers' CER reading and other numbers. The headline counts a looped page as
+  missed text, but a loop on a page with no reference text costs it nothing. The column exists so
+  that this is visible.
 - **Numbers from earlier scorer versions are not comparable.** The scorer moved to count-aware
   semantics (3.0), the normalizer is frozen at `2026-10-30a` (index tables by column group; `2026-07-20a`
 before that), and post-processing is versioned
