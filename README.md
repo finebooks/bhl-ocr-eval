@@ -52,7 +52,9 @@ and job id, recorded per model in
 routers are not admissible; see [`RESULTS.md`](RESULTS.md), *What counts as a score*.
 
 `scripts/bake_leaderboard.py` writes the current scores into
-[`docs/leaderboard/index.html`](docs/leaderboard/index.html) and uploads the page to the Space.
+[`docs/leaderboard/index.html`](docs/leaderboard/index.html). On every merge to `main`, the
+[`sync-leaderboard`](.github/workflows/sync-leaderboard.yml) workflow publishes `docs/leaderboard/`
+to the Space.
 
 ## Design in brief
 
