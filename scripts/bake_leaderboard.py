@@ -52,7 +52,10 @@ META = {
     "lightonai/LightOnOCR-2-1B": (1.006, "specialist", "LightOnOCR-2"),
     "allenai/olmOCR-2-7B-1025-FP8": (8.294, "specialist", "olmOCR-2"),
     "ds4sd/SmolDocling-256M-preview": (0.256, "specialist", "SmolDocling"),
-    "tiiuae/Falcon-OCR": (0.3, "specialist", "Falcon-OCR"),
+    "tiiuae/Falcon-OCR": (0.3, "specialist", "Falcon-OCR (v1)"),
+    # A different model published under the same repo id: TII replaced the weights in place
+    # on 2026-09-11. The board keeps both rows; REPOS maps the versioned key back to the repo.
+    "tiiuae/Falcon-OCR@v1.5": (0.3, "specialist", "Falcon-OCR 1.5"),
     "PaddlePaddle/PaddleOCR-VL-1.6": (0.959, "specialist", "PaddleOCR-VL-1.6"),
     "PaddlePaddle/PP-OCRv6_medium": (None, "classical", "PP-OCRv6"),
     "tesseract-5": (None, "classical", "Tesseract 5"),
@@ -141,6 +144,10 @@ PIPELINES = {
 }
 
 
+# Board keys that are not themselves a Hub repo id but belong to one.
+REPOS = {"tiiuae/Falcon-OCR@v1.5": "tiiuae/Falcon-OCR"}
+
+
 def _round(value, digits=4):
     return None if value is None else round(value, digits)
 
@@ -152,7 +159,7 @@ def _row(model_id, card, *, with_strata):
         "name": display,
         "org": org,
         "model_id": model_id,
-        "repo": None if model_id in PIPELINES else model_id,
+        "repo": None if model_id in PIPELINES else REPOS.get(model_id, model_id),
         "pipeline": PIPELINES.get(model_id),
         "type": mtype,
         "params": params,

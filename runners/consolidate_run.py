@@ -74,7 +74,8 @@ def _read_parts(run: str):
     return pd.concat([pd.read_parquet(p) for p in paths], ignore_index=True), len(paths)
 
 
-def consolidate(frame, *, id_col, key_col, raw_col, error_col, finish_col, expect_rows=None):
+def consolidate(frame, *, id_col, key_col, raw_col, error_col, finish_col, expect_rows=None,
+                token_cap=None, tokens_col="completion_tokens"):
     """Rename the key, seal error and truncated rows, and return (frame, counts).
 
     Never drops a row: a page that vanishes here would fail the scorer's completeness gate as a
@@ -118,6 +119,15 @@ def consolidate(frame, *, id_col, key_col, raw_col, error_col, finish_col, expec
     raw = frame[raw_col] if raw_col in frame.columns else pd.Series([None] * len(frame))
     errors = frame[error_col] if error_col in frame.columns else pd.Series([None] * len(frame))
     finish = frame[finish_col] if finish_col in frame.columns else pd.Series([None] * len(frame))
+    if token_cap is not None:
+        # A producer that reports no finish_reason but does report the output token count (a
+        # vendor pipeline). A row that used the whole budget hit the cap, which is what
+        # finish_reason == "length" means; without this its runaway text is scored as a
+        # transcription while every other row's is sealed.
+        if tokens_col not in frame.columns:
+            raise SystemExit(f"--token-cap needs a {tokens_col!r} column; got {sorted(frame.columns)}")
+        at_cap = frame[tokens_col].fillna(0) >= token_cap
+        finish = finish.astype(object).where(finish.notna() | ~at_cap, "length")
 
     # 1. producer errors: no `raw` key at all -> parquet null. Seal with the recorded reason.
     is_err = raw.isna() | errors.notna()
@@ -162,6 +172,10 @@ def main():
     ap.add_argument("--raw-col", default="raw")
     ap.add_argument("--error-col", default="error")
     ap.add_argument("--finish-col", default="finish_reason")
+    ap.add_argument("--token-cap", type=int, default=None,
+                    help="treat a row with no finish_reason whose output token count reached this "
+                         "cap as finish_reason=length (producers that report tokens but no reason)")
+    ap.add_argument("--tokens-col", default="completion_tokens")
     ap.add_argument("--expect-rows", type=int, default=None,
                     help="fail unless the run has exactly this many rows")
     args = ap.parse_args()
@@ -169,7 +183,8 @@ def main():
     frame, n_parts = _read_parts(args.run)
     frame, counts = consolidate(frame, id_col=args.id_col, key_col=args.key_col,
                                 raw_col=args.raw_col, error_col=args.error_col,
-                                finish_col=args.finish_col, expect_rows=args.expect_rows)
+                                finish_col=args.finish_col, expect_rows=args.expect_rows,
+                                token_cap=args.token_cap, tokens_col=args.tokens_col)
     if args.model:
         frame["model"] = args.model
 

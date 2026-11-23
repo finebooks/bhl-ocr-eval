@@ -185,3 +185,25 @@ def test_a_retry_that_also_failed_keeps_one_error_row():
     })
     out, counts = _consolidate(frame)
     assert len(out) == 1 and counts["producer_errors"] == 1
+
+
+def test_token_cap_seals_a_row_that_reports_tokens_but_no_finish_reason():
+    # A vendor pipeline: no finish_reason, but the output token count is recorded. A row at the
+    # cap is a truncation, like finish_reason == "length" on every other producer.
+    frame = _frame(finish_reason=[None, None, None], completion_tokens=[412, 8192, 8191])
+    out, counts = _consolidate(frame, token_cap=8192)
+    assert counts["truncated"] == 1 and counts["producer_errors"] == 0
+    assert out["raw"].tolist()[1].startswith("__ERR__FinishReason:length")
+    assert out["raw_verbatim"].tolist()[1] == "page two"       # runaway text stays readable
+    assert out["raw"].tolist()[2] == "page three"              # one token short is not the cap
+
+
+def test_token_cap_leaves_a_recorded_finish_reason_alone():
+    frame = _frame(completion_tokens=[8192, 10, 10])           # says "stop" at the cap
+    _, counts = _consolidate(frame, token_cap=8192)
+    assert counts["truncated"] == 0
+
+
+def test_token_cap_without_a_token_column_is_a_hard_error():
+    with pytest.raises(SystemExit, match="completion_tokens"):
+        _consolidate(_frame(), token_cap=8192)

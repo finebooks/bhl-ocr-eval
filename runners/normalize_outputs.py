@@ -758,6 +758,10 @@ REGISTRY = {
     # unused-vocab tokens (see falcon_strip_unused_tokens). No empty-output raise: the pipeline
     # answers every page, and a blank page answered with junk must SCORE as junk.
     "tiiuae/Falcon-OCR": (strip_outer_whitespace, falcon_strip_unused_tokens),
+    # v1.5 shipped as a new commit on the SAME Hub repo (2026-09-11), so the repo id cannot
+    # tell the two rows apart; the board key carries the version. Same vendor image family,
+    # same output shape, same transforms.
+    "tiiuae/Falcon-OCR@v1.5": (strip_outer_whitespace, falcon_strip_unused_tokens),
     # dots-mocr-port.py — raises on empty; the recipe's "[OCR ERROR]" sentinel strings are gone.
     "rednote-hilab/dots.mocr": (strip_outer_whitespace, require_non_empty),
     # dots-ocr-port.py — the 1.7B sibling; strip only, no empty-output raise.
