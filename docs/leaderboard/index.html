@@ -206,7 +206,7 @@
         <th class="l" data-k="type">Type <span class="info" tabindex="0" data-tip="How the model works: <b>VLM</b> = general vision-language model · <b>specialist</b> = OCR-specific model · <b>classical</b> = non-neural OCR engine.">i</span></th>
         <th class="sortable" data-k="params">Params <span class="info" tabindex="0" data-tip="Model size in billions of parameters, <b>measured</b> from the repo's safetensors index (all weights, vision towers included) rather than taken from the model's name — GLM-OCR is 1.33B, not the 0.9B it is usually listed as, and olmOCR-2-<b>7B</b> is 8.29B. Classical engines have no comparable count and are left off the scatter below.">i</span> <span class="ar">▾</span></th>
         <th class="sortable act" data-k="cer_all">CER · all pages <span class="info" tabindex="0" data-tip="CER · reading over <b>every</b> page. A page where the model looped is scored as if it returned nothing: its text counts as missed, so a looped page with no text costs nothing — see Loop&nbsp;%. Equal to CER · reading for a row with no loops or errors. It scores the text you keep after dropping looped pages; <b>lower is better</b>. The board ranks on this.">i</span> <span class="ar">▾</span></th>
-        <th class="sortable" data-k="loop">Loop % <span class="info" tabindex="0" data-tip="Pages where generation hit its token cap in a <b>repetition loop</b>, as a share of all pages and as a count. Such a page is left out of every other number on the row and is scored as a page with no output in CER&nbsp;·&nbsp;all&nbsp;pages. A loop on a page with no text costs nothing there, so read the two columns together; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
+        <th class="sortable" data-k="loop">Loop % <span class="info" tabindex="0" data-tip="Pages where generation hit its token cap in a <b>repetition loop</b>, as a share of all pages and as a page count (pp); the bar is scaled to the worst row. Such a page is left out of every other number on the row and is scored as a page with no output in CER&nbsp;·&nbsp;all&nbsp;pages. A loop on a page with no text costs nothing there, so read the two columns together; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
         <th class="sortable" data-k="cer_read">CER · reading <span class="info" tabindex="0" data-tip="Character error rate, <b>reading</b> lane — NFKC, case-folded, de-hyphenated, markup stripped, body only. Reading ability, not transcription convention. Micro-averaged across the pages the model finished (looped pages excluded); <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
         <th class="sortable" data-k="cer_dip">CER · dip <span class="info" tabindex="0" data-tip="Character error rate, <b>diplomatic</b> lane — NFC, case-sensitive, keeps long-s (ſ), ligatures and diacritics. Fidelity to the original spelling; <b>lower is better</b>.">i</span> <span class="ar">▾</span></th>
         <th class="sortable" data-k="content_cer">Content <span class="info" tabindex="0" data-tip="CER · reading over the 1,737 <b>content</b> pages only — ordinary text pages.">i</span> <span class="ar">▾</span></th>
@@ -386,6 +386,7 @@ function scatter(){
 
 /* ---- table ---- */
 let sortK="cer_all",sortDir=1;
+const MAXLOOP=Math.max(...DATA.map(d=>d.loop||0))||1;   // loop bars scale to the worst row
 function render(){
   const fT=fType.value,fS=fSize.value,fR=fReads.value;
   let rows=DATA.filter(d=>(!fT||d.type===fT)&&(!fS||sizeBucket(d.params)===fS)&&(!fR||policy(d.furn)===fR));
@@ -406,7 +407,9 @@ function render(){
       <td class="l"><span class="type"><i class="dot" style="background:${CATCOL[d.type]}"></i>${d.type}</span></td>
       <td class="params">${d.params!=null?`<span class="pv">${d.params}</span><span class="pu">B</span>${pbar}`:'<span class="pu">—</span>'}</td>
       <td><span class="cer">${pf(d.cer_all)}</span> <span class="ci">[${pf(d.ci_all[0])}–${pf(d.ci_all[1])}]</span>${cbar}</td>
-      <td>${lp(d.loop)}<br><span class="ci">${d.looped} page${d.looped===1?"":"s"}</span></td>
+      <td>${d.looped
+        ?`${lp(d.loop)} <span class="ci">${d.looped} pp</span><div class="bar"><i style="width:${Math.max(4,d.loop/MAXLOOP*100).toFixed(0)}%;background:var(--class)"></i></div>`
+        :`<span class="ci">none</span>`}</td>
       <td>${pf(d.cer_read)}</td>
       <td>${pf(d.cer_dip)}</td>
       <td>${fm(d.content_cer)}</td>
