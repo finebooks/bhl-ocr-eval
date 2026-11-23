@@ -207,3 +207,15 @@ def test_token_cap_leaves_a_recorded_finish_reason_alone():
 def test_token_cap_without_a_token_column_is_a_hard_error():
     with pytest.raises(SystemExit, match="completion_tokens"):
         _consolidate(_frame(), token_cap=8192)
+
+
+def test_token_cap_reads_counts_stored_as_strings():
+    frame = _frame(finish_reason=[None, None, None], completion_tokens=["8192", None, "4"])
+    _, counts = _consolidate(frame, token_cap=8192)
+    assert counts["truncated"] == 1
+
+
+def test_token_cap_refuses_a_count_that_is_not_a_number():
+    frame = _frame(finish_reason=[None, None, None], completion_tokens=["8192", "n/a", "4"])
+    with pytest.raises(ValueError):
+        _consolidate(frame, token_cap=8192)

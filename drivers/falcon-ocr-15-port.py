@@ -1,38 +1,35 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["saturate[hf]>=0.1.1", "pillow"]
+# dependencies = ["saturate[hf]==0.2.0", "pillow"]
 # ///
-"""tiiuae/Falcon-OCR v1.5 — SMOKE variant of drivers/falcon-ocr-port.py (vendor pipeline endpoint).
-
-The ghcr image (sha256:2ec8025..., built 2026-04-03) COPIES v1 weights into /models/Falcon-OCR at build
-time and there is no v1.5 image (ghcr has only `latest`, same digest). v1.5 is a Hub-only release on the
-same repo (commit d259a7fb74: model.safetensors + modeling_falcon_ocr.py). So this variant stages the
-pinned v1.5 snapshot over the baked model dir BEFORE the entrypoint starts, and verifies the safetensors
-SHA-256 against the Hub LFS hash so the row cannot silently score v1. Everything else is the board path.
-NOTE: the image serves via its own vLLM implementation, so only the WEIGHTS change; the v1.5 modeling.py
-edit (category prompt ignored) is irrelevant on this path.
-
-Original docstring follows.
+"""tiiuae/Falcon-OCR v1.5 — the vendor pipeline endpoint, end-to-end route (board row).
 
 Run (inside ghcr.io/tiiuae/falcon-ocr, which ships both services; this driver boots them):
-    hf jobs run --image ghcr.io/tiiuae/falcon-ocr@sha256:... --flavor a10g-small \
+    hf jobs run --image ghcr.io/tiiuae/falcon-ocr@sha256:d0b4120b... --flavor a10g-small \
       --secrets HF_TOKEN -v hf://buckets/davanstrien/jobs-artifacts:/artifacts:ro -- \
-      bash -lc 'pip install -q "saturate[hf]>=0.1.1" pillow && python3 /artifacts/falcon-ocr-port.py \
-        --input-dataset <benchmark> --id-column PageID --limit 20 --output hf://buckets/...'
+      /bin/bash -c "pip install -q --target /tmp/drvlib 'saturate[hf]==0.2.0' pillow && \
+        PYTHONPATH=/tmp/drvlib python3 /artifacts/falcon-ocr-15/falcon-ocr-15-port.py \
+        --input-dataset <benchmark> --revision <sha> --id-column PageID --shard 0/2 \
+        --no-stage --skip-layout --output hf://buckets/..."
 
-Two things differ from every other port in this matrix:
+What the row is:
 
-- Falcon-OCR is a CROP model by design: the card's flow is layout detection -> crops ->
-  per-crop OCR with category prompts. Whole-page OCR is the vendor's own Pipeline service
-  (layout + OCR + markdown assembly), so that is what this benchmark scores — the
-  deployable full-page product, not the off-label direct-VLM path. `--skip-layout` exists
-  to measure that off-label path deliberately.
-- The serving stack is the vendor image's own entrypoint (`/app/entrypoint_single.sh`,
-  single-GPU: vLLM on :8000 + pipeline on :5002), not saturate's Engine. The driver boots
-  it as a subprocess and gates on BOTH health endpoints before pumping.
+- WEIGHTS. v1.5 replaced the weights in the same Hub repo (commit d259a7fb74, 2026-09-11). Vendor
+  images from digest c61192cd on bake v1.5; `--no-stage` keeps the image exactly as shipped and
+  only checks that the baked model.safetensors has the v1.5 SHA-256, so the row cannot silently
+  score v1. Without `--no-stage` the pinned Hub snapshot is staged over the baked model dir first
+  (how the first v1.5 smoke runs worked, on the v1 image); that also replaces the image's
+  config.json, so the board row does not use it.
+- ROUTE. `--skip-layout` is the pipeline's direct-VLM route, one request per page, which the
+  v1.5 card recommends. The v1 row (drivers/falcon-ocr-port.py) scores the layout route.
+- SERVING. The vendor image's own entrypoint (`/app/entrypoint_single.sh`, single GPU: vLLM on
+  :8000 + pipeline on :5002), not saturate's Engine. The driver boots it as a subprocess and
+  gates on both health endpoints before pumping.
+- saturate is pinned to 0.2.0: in that version a raise inside `parse` becomes a durable error
+  row that `--retry-errors` can supersede. 0.3 changed that and the shard assignment.
 
-The pipeline response carries no finish_reason; `total_output_tokens` is recorded per page
-and the loop question is answered downstream from output shape, not a cap flag.
+The pipeline response carries no finish_reason. `total_output_tokens` is recorded per page, and a
+page at the route's cap is sealed as a truncation downstream (see E2E_MAX_TOKENS).
 """
 import argparse
 import base64
@@ -178,6 +175,10 @@ def pipeline_error(json_result, markdown) -> str | None:
     and the failure inside json_result (`[{"content": "", "error": "..."}]`). Left alone, that
     row scores as a model that read nothing. Returning the message makes it an error row, which
     a retry can supersede.
+
+    Only a page with NO text counts. On the layout route one region can fail while the rest of
+    the page is assembled; that partial page is what the vendor pipeline delivers, so it is
+    scored as delivered, the same way the v1 row was.
     """
     if (markdown or "").strip() or not isinstance(json_result, list):
         return None

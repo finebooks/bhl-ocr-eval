@@ -126,7 +126,9 @@ def consolidate(frame, *, id_col, key_col, raw_col, error_col, finish_col, expec
         # transcription while every other row's is sealed.
         if tokens_col not in frame.columns:
             raise SystemExit(f"--token-cap needs a {tokens_col!r} column; got {sorted(frame.columns)}")
-        at_cap = frame[tokens_col].fillna(0) >= token_cap
+        # to_numeric: a count stored as a string must compare as a number, and a value that is
+        # not a number is a broken run, not a page under the cap.
+        at_cap = pd.to_numeric(frame[tokens_col], errors="raise").fillna(0) >= token_cap
         finish = finish.astype(object).where(finish.notna() | ~at_cap, "length")
 
     # 1. producer errors: no `raw` key at all -> parquet null. Seal with the recorded reason.
