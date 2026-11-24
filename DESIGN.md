@@ -58,8 +58,9 @@ a scorer, and it stays deliberately ignorant of *how* a model is served:
   is sent unchanged, included in the page-set-aware cache key, and recorded with request settings.
   `--request-settings-file` accepts one validated JSON object per invocation, merged over the runner's
   `max_tokens=16384` / `temperature=0` defaults. A response whose finish reason is not `stop` (length
-  truncation, content filtering) is recorded as a TRUNCATED page — excluded from aggregates, never
-  scored as a transcription, because a runaway page emits thousands of characters against a few
+  truncation, content filtering) is recorded as a TRUNCATED page — excluded from the finished-page
+  aggregates, scored as a page with no output in the all-pages headline (see *The headline: CER
+  over all pages*), never scored as a transcription, because a runaway page emits thousands of characters against a few
   hundred of ground truth and scoring it whole turns micro-CER into a loop counter. **Truncated is
   a third state, not an error**: a repetition loop is the model failing on that page, not the run
   failing, so it does NOT make a model ineligible (see *Eligibility* below). An absent response
@@ -152,21 +153,23 @@ explicit `*_micro` model values plus pooled numerators and denominators—never 
 aliases. `script_match` remains a separately named per-page macro diagnostic. The per-page **median** is kept as a robustness diagnostic; the per-page mean is deliberately
 NOT reported (a 40-char title page can yield CER > 1 and the mean is hostage to such sparse-GT
 outliers — reporting a number this document calls misleading invited misuse). Rows the runner
-flagged as errors are excluded from every aggregate and surfaced as a separate error count (an
-*unflagged* empty output is a real model failure and IS scored). These metrics are explicitly
-conditional on successful pages. **Producer errors** — transport failures, absent response bodies,
+flagged as errors are excluded from every aggregate except the all-pages CER (below) and surfaced
+as a separate error count (an *unflagged* empty output is a real model failure and IS scored).
+These metrics are explicitly conditional on successful pages. **Producer errors** — transport failures, absent response bodies,
 post-processing that could not model the output — make a model ineligible. **Truncations** do not:
-they are excluded from the aggregates exactly like errors, but reported separately as a
-repetition-loop rate, because every generating model on this corpus truncates somewhere (measured
-0.32%–6.47%) and disqualifying all of them would leave only the non-neural engines rankable.
+they are excluded from the finished-page aggregates exactly like errors, but reported separately as a
+repetition-loop rate, because most generating models on this corpus truncate somewhere (measured
+0.09%–6.56% where it happens) and disqualifying all of them would leave only the non-neural engines rankable.
 
 That exclusion has a cost the board must state rather than hide: **removing truncated pages flatters
-the models that truncate most**, because loops cluster on dot-leader indexes and dense tabular pages
-that are hard for everyone. A model at 6.5% is scored on 93.5% of the corpus with the hardest pages
-disproportionately removed; one at 0.3% is scored on 99.7%. The loop rate is therefore a board
-column, not a diagnostic, and the two numbers have to be read together. Models are ordered
-by their CER point estimates; volume-bootstrap confidence intervals are reported as uncertainty and
-are not converted into statistical-tie claims.
+the models that truncate most** when their loops fall on hard pages. For some models (dots.ocr,
+SmolDocling, Qwen3.5-9B, olmOCR-2) loops cluster on dot-leader indexes and dense tabular pages that
+are hard for everyone; for others (Nemotron-3.5-Parse, PaddleOCR-VL-1.6, OvisOCR2) they fall mostly
+on blank pages. A model at 6.5% is scored on 93.5% of the corpus; one at 0.3% is scored on 99.7%.
+The loop rate is therefore a board column, not a diagnostic, and the two numbers have to be read
+together. Models are ordered by their all-pages CER point estimates (next section);
+volume-bootstrap confidence intervals are reported as uncertainty and are not converted into
+statistical-tie claims.
 
 Completeness is a separate gate: every model must contain exactly one row for the authoritative full GT
 page set recorded before any subset. `score_dataset.py --allow-incomplete` can write separately labelled
@@ -184,6 +187,38 @@ and language, so page-level resampling would treat ~370 correlated pages as inde
 manufacture over-narrow CIs (per-book CER varies by >20× on this sample; the effective sample size
 is closer to the number of books). Volume-level CIs are wider and honester — with only six books
 they are the dominant caveat on any claimed separation between models.
+
+## The headline: CER over all pages
+
+The board ranks on **CER · all pages** (`cer_reading_all_pages_micro`): the same reading-lane,
+body-only micro CER, pooled over every one of the 2,165 pages. A page on which the model looped to
+its token cap is scored as if the model returned nothing: its whole reference text counts as
+missed, and none of the runaway text is charged. CER · reading (the pages the model finished) and
+Loop % stay as their own columns; for a model that never loops the two CERs are equal.
+
+The principle: **the headline scores the text a careful user would keep.** A loop is detectable —
+the completion ends at the token cap — so a user drops that page and loses exactly the text on it.
+Invented text that stops normally is not detectable, so it is charged in full as insertions. Ranked
+on finished pages alone, a model could rise by looping on its hardest pages; here a looped page
+costs the text it holds.
+
+The known limitation: **a loop on a page with no reference text costs nothing in this number.**
+344 of the 2,165 pages have no body reference text, and for some models that is where most loops
+fall: Nemotron-3.5-Parse has 141 of its 142 loops on such pages, PaddleOCR-VL-1.6 119 of 140,
+OvisOCR2 31 of 55. That is why Loop % must be read beside the headline.
+
+Alternatives considered and not adopted:
+
+- **A minimum charge per looped page** (a floor of one median page, 1,402 characters). Only the top
+  two ranks are stable across floors from 200 to 2,800 characters, and at the 1,402 floor more than
+  half of the error total for PaddleOCR-VL-1.6 (55%) and Nemotron-3.5-Parse (52%) would be the
+  imputed penalty.
+- **Scoring the runaway output with a uniform insertion cap.** This is more symmetric between loops
+  and hallucinations, and the raw looped text is kept (`raw_verbatim`), so it needs no new runs.
+  But it re-ranks models that never loop, and on blank pages it reduces to the same constant.
+  Left as an open question.
+- **Ranking on content pages only.** This hides invented text on blank pages: GLM-OCR would rank
+  2nd while writing about 187 invented characters per sparse or blank page.
 
 ## The furniture trade-off (the one to be explicit about)
 

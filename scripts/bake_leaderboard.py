@@ -2,7 +2,7 @@
 # requires-python = ">=3.10"
 # dependencies = []
 # ///
-"""Bake leaderboard JSON snapshots into the static board at leaderboard/index.html.
+"""Bake leaderboard JSON snapshots into the static board at docs/leaderboard/index.html.
 
 Reads the full-benchmark report output, joins model metadata
 (params/type/display name — METADATA, not a scoring concern, so it lives here and not in the
@@ -11,8 +11,8 @@ The HTML is the product for v0; data-driven serving is tracked separately (issue
 
   uv run scripts/bake_leaderboard.py \
       --full data/full-2026-08/leaderboard.json
-  # then deploy the baked page to the Space that serves it:
-  hf upload finebooks/bhl-ocr-leaderboard docs/leaderboard/index.html index.html --repo-type space
+  # Merging the baked page to main deploys it: .github/workflows/sync-leaderboard.yml uploads
+  # docs/leaderboard/ to the Space finebooks/bhl-ocr-leaderboard.
 
 The 372-page sample board was DROPPED on 2026-08-04. Its raw completions were cached
 neither locally nor in any bucket — only its scorecards survive — so it could not be
@@ -157,6 +157,8 @@ def _row(model_id, card, *, with_strata):
         "type": mtype,
         "params": params,
         "cer_read": _round(card["cer_reading_micro"]),
+        "cer_all": _round(card["cer_reading_all_pages_micro"]),
+        "ci_all": [_round(card["cer_all_pages_ci"][0]), _round(card["cer_all_pages_ci"][1])],
         "cer_dip": _round(card["cer_diplomatic_micro"]),
         "ci": [_round(card["cer_ci"][0]), _round(card["cer_ci"][1])]
         if card.get("cer_ci")
@@ -168,8 +170,10 @@ def _row(model_id, card, *, with_strata):
         "n": card["n"],  # already the successful-page count (submitted - errors)
         "err": card.get("producer_errors", card["errors"]),
         # Repetition-loop rate: a board column, not a diagnostic. Truncated pages are
-        # excluded from the aggregates, so a HIGHER rate means the row was scored on an
-        # easier effective page set — read it alongside CER, never on its own.
+        # excluded from every number but cer_all, which counts them as pages with no output.
+        # A loop on a page with no reference text costs nothing in cer_all, so the rate and
+        # the page count sit next to the headline.
+        "looped": card["truncated"],
         "loop": _round(card.get("truncation_rate"), 5),
         "eligible": card.get("eligible", True),
     }
@@ -186,6 +190,11 @@ def _row(model_id, card, *, with_strata):
 
 def load_board(path, *, with_strata):
     board = json.loads(pathlib.Path(path).read_text())
+    if board["schema_version"] != "2.2":
+        raise SystemExit(
+            f"{path} has report schema {board['schema_version']}; the board needs 2.2 (all-pages "
+            "CER). Regenerate it from the scorecards with runners/leaderboard.py."
+        )
     scored, excluded = [], []
     # order = eligible models; ineligible_order = errored models, which still carry
     # conditional diagnostics unless every page errored (then no score exists at all).
@@ -207,7 +216,7 @@ def load_board(path, *, with_strata):
             )
             continue
         scored.append(_row(model_id, card, with_strata=with_strata))
-    scored.sort(key=lambda r: r["cer_read"])
+    scored.sort(key=lambda r: r["cer_all"])
     return board, scored, excluded
 
 

@@ -237,7 +237,7 @@ def score_gt_row(gt, ocr, *, model, err, page_id=None, truncated=False):
     `page_id` defaults to the row's `PageID`; pass it explicitly to control the dedup key's type.
 
     `truncated=True` marks an error row whose cause was the model hitting its token cap rather than
-    the run failing. It is a SUBSET of `err`: the page is excluded from aggregates either way, but
+    the run failing. It is a SUBSET of `err`: the page is excluded from every aggregate but all-pages CER either way, but
     only a non-truncated error makes a model ineligible (see report.model_scorecard). Schema 2.1
     added this field because the distinction has to travel WITH the row — it is derived from the
     OCR text's sentinel, which no downstream layer can see, and without it `leaderboard.py` would
