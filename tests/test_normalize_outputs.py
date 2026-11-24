@@ -247,6 +247,7 @@ def test_every_registered_model_has_named_callable_transforms():
 def test_registry_covers_the_markdown_producing_drivers():
     assert set(NO.REGISTRY) == {
         "deepseek-ai/DeepSeek-OCR", "deepseek-ai/DeepSeek-OCR-2", "tiiuae/Falcon-OCR",
+        "tiiuae/Falcon-OCR@v1.5",
         "rednote-hilab/dots.mocr",
         "rednote-hilab/dots.ocr", "google/gemma-4-12B-it", "zai-org/GLM-OCR",
         "tencent/HunyuanOCR", "kraken/PP-OCRv6-medium", "lightonai/LightOnOCR-2-1B",

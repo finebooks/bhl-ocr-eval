@@ -26,7 +26,7 @@ datasets:
 
 # BHL OCR Leaderboard
 
-How well OCR and vision-language models transcribe 18th–19th-century book pages: 14 models scored
+How well OCR and vision-language models transcribe 18th–19th-century book pages: 27 models scored
 on all 2,165 pages of the IMPACT-BHL expert-transcribed ground truth, every run served by us under
 a pinned image, model revision, script commit and job id.
 

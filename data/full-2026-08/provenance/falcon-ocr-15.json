@@ -1,0 +1,30 @@
+{
+ "producer": "bhl-ocr-eval drivers/falcon-ocr-15-port.py --no-stage --skip-layout (vendor pipeline, direct-VLM end-to-end route) on HF Jobs",
+ "run_id": "falcon-ocr-15-e2e-2026-11-23",
+ "script": "drivers/falcon-ocr-15-port.py",
+ "benchmark_dataset": "davanstrien/bhl-eval-impact-full-2165-v1",
+ "benchmark_resolved_revision": "3ee88b4bfd553622561b8b2c002ac4e293a5e06e",
+ "model": "tiiuae/Falcon-OCR",
+ "model_revision": "ghcr.io/tiiuae/falcon-ocr@sha256:d0b4120bfd7b6fafdd9ae95124d32e8abdbb710ada6b4a303b33fc7636b5e1d7 (bakes the v1.5 model.safetensors, sha256 3df91e403dc48794bf1c48511e75c3508b1cc52df599dcc15f1080d46101ab16, checked in-job; the image's own config, nothing staged)",
+ "prompt": null,
+ "settings": {
+  "serving": "vendor image entrypoint_single.sh: vLLM :8000 (float32, max_model_len 16384) + pipeline :5002 on one a10g-small",
+  "endpoint": "/falconocr/parse",
+  "skip_layout": true,
+  "max_pixels_longest_edge": 2048
+ },
+ "notes": [
+  "End-to-end route, the mode the v1.5 card recommends. The layout route was run on the same image the same day and scores 0.1802 (bucket prefix falcon-ocr-15-layout-2026-11-23); the v1 row uses the layout route.",
+  "The pipeline returns no finish_reason but reports the output token count. 19 pages used the route's full 8192-token budget and are consolidated as truncations (consolidate_run.py --token-cap 8192), like finish_reason=length on other rows.",
+  "2 pages (9684349, 12341933) came back HTTP 200 with empty text and a vLLM transport error inside json_result. They were re-run on the same image (job 6b045f4608b6bdfb5bd0f51d) and the successful rows supersede them. The committed driver now raises on that response; this run's rows were marked after the fact with the same check.",
+  "Scored as text, without the token-cap rule, the same outputs give 0.0942: 197,252 of the inserted characters sit on the 19 capped pages."
+ ],
+ "job": {
+  "ids": ["6b044fa8a02d1cf5a7b82582", "6b044fa9a02d1cf5a7b82587", "6b045f4608b6bdfb5bd0f51d"],
+  "shards": "0-1/2, plus a 2-page retry",
+  "docker_image": "ghcr.io/tiiuae/falcon-ocr@sha256:d0b4120bfd7b6fafdd9ae95124d32e8abdbb710ada6b4a303b33fc7636b5e1d7",
+  "flavor": "a10g-small",
+  "created_at": "2026-11-23",
+  "output": "hf://buckets/davanstrien/bhl-ocr-runs/falcon-ocr-15-e2e-2026-11-23/"
+ }
+}
