@@ -1,0 +1,43 @@
+name: sync-leaderboard
+
+# Publishes docs/leaderboard/ to the Space finebooks/bhl-ocr-leaderboard on every merge to main
+# that touches it, so the public board cannot fall behind this repo.
+#
+# Auth is a Hub trusted publisher configured on the Space (repository + branch + workflow claims),
+# not a stored token: the job trades its GitHub OIDC token for a one-hour Hub token scoped to that
+# Space. Renaming this file or the branch breaks the exchange until the publisher is updated.
+# https://huggingface.co/docs/hub/trusted-publishers
+on:
+  push:
+    branches: [main]
+    paths: ["docs/leaderboard/**", ".github/workflows/sync-leaderboard.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-leaderboard
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # lets the job request the OIDC token the Hub exchanges
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          version: "0.9.27"
+      # No --delete: files that exist only on the Space (.gitattributes) stay untouched.
+      - name: Upload the board to the Space
+        env:
+          HF_OIDC_RESOURCE: spaces/finebooks/bhl-ocr-leaderboard
+        run: >
+          uvx --from "huggingface_hub>=1.19.0" hf upload finebooks/bhl-ocr-leaderboard
+          docs/leaderboard . --repo-type space
+          --commit-message "Sync board from bhl-ocr-eval ${GITHUB_SHA::7}"
