@@ -57,6 +57,14 @@ routers are not admissible; see [`RESULTS.md`](RESULTS.md), *What counts as a sc
 [`sync-leaderboard`](.github/workflows/sync-leaderboard.yml) workflow publishes `docs/leaderboard/`
 to the Space.
 
+### Versions
+
+Scores and ranks change when a model is added or a scoring rule changes. Each such change gets a
+dated git tag, `board-YYYY-MM-DD`, with a [release note](https://github.com/finebooks/bhl-ocr-eval/releases)
+that says what moved. The board shows its tag in the line under the title. If you quote a score,
+quote the tag with it. A tag pins the scorer, the normalizer, the per-page scorecards and the
+benchmark revision together.
+
 ## Design in brief
 
 See [`DESIGN.md`](DESIGN.md) for the full methodology and trade-offs. The scoring core is versioned

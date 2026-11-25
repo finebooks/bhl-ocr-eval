@@ -235,10 +235,16 @@ def main():
         default=None,
         help="date stamped on the board (defaults to today, ISO)",
     )
+    ap.add_argument(
+        "--board-version",
+        default=None,
+        help="git tag this board state is released under (defaults to board-<baked date>)",
+    )
     args = ap.parse_args()
 
     full_board, full_rows, full_excluded = load_board(args.full, with_strata=True)
     fp = full_board["provenance"]
+    baked = args.baked_date or datetime.datetime.now(tz=datetime.timezone.utc).date().isoformat()
 
     prov = {
         "norm": fp["norm_version"],
@@ -247,8 +253,9 @@ def main():
         "grapheme": fp["score"]["grapheme_mode"],
         "volumes": 6,
         "full_pages": fp["page_count"],
-        "baked": args.baked_date
-        or datetime.datetime.now(tz=datetime.timezone.utc).date().isoformat(),
+        "baked": baked,
+        # The tag a reader cites: scores and ranks change between tags, never within one.
+        "version": args.board_version or f"board-{baked}",
     }
 
     block = (
